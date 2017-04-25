@@ -1,5 +1,5 @@
 # Replication-on-Demand-Cache-Accelerator
-This is an optional component associated with the "Replication on Demand" project that populates and maintains a Redis cache for use in increasing the performance of the overall application.  It's main use is caching pre-computed file hashes.
+This is an optional component associated with the "Replication on Demand" project that populates and maintains a Redis cache for use in increasing the performance of the overall application.  It's main use is caching pre-computed file hashes.  The software is compiled via Maven into an executable JAR file. 
 
 ## Installing Redis
 The Replication-on-Demand application is deployed to redundant Linux servers running RHEL6.
@@ -18,7 +18,7 @@ The Replication-on-Demand application is deployed to redundant Linux servers run
 # make test
 # make install
 ```
-* Run the server installation script to establish a Redis server on the local interface running on the default port (6379).
+* Run the server installation script to establish a Redis server bound to the local interface (127.0.0.1) and running on the default port (6379).
 ```
 # cd utils
 # ./install_server.sh
