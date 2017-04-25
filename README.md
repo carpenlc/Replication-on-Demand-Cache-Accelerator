@@ -2,7 +2,7 @@
 This is an optional component associated with the "Replication on Demand" project that populates and maintains a Redis cache for use in increasing the performance of the overall application.  It's main use is caching pre-computed file hashes.
 
 ## Installing Redis
-The Replication-on-Demand application is deployed to redundant Linux servers running Red Hat el6.
+The Replication-on-Demand application is deployed to redundant Linux servers running RHEL6.
 * Install the pre-requisites:
 ```
 # yum install tcl.x86_64
@@ -25,3 +25,8 @@ The Replication-on-Demand application is deployed to redundant Linux servers run
 ```
 
 ## Download and Build the Source
+* Pre-requisites:
+** JDK v1.8.0 (or higher)
+** GIT v1.7.0 (or higher)
+** Maven v3.3.8 (or higher)
+
