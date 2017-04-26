@@ -21,6 +21,7 @@
       <jedis.version>2.9.0</jedis.version>
       <commons.codec.version>1.10</commons.codec.version>
       <commons.pool-2.version>2.4.2</commons.pool-2.version>
+      <oracle.jdbc.version>12.1.0.2</oracle.jdbc.version>
   </properties>
 
     <dependencies>
@@ -74,6 +75,12 @@
             <artifactId>commons-codec</artifactId>
             <version>${commons.codec.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.github.noraui</groupId>
+            <artifactId>ojdbc7</artifactId>
+            <version>${oracle.jdbc.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
