@@ -76,8 +76,8 @@ public class PropertyLoader {
 		
 		try {
 		    
-			stream = PropertyLoader.class.getResourceAsStream(getPropertyFileName());
-			//stream = ClassLoader.getSystemResourceAsStream(getPropertyFileName());
+			//stream = PropertyLoader.class.getResourceAsStream(getPropertyFileName());
+			stream = ClassLoader.getSystemResourceAsStream(getPropertyFileName());
 			//stream = new FileInputStream(new File(getPropertyFileName()));
 			if (stream != null) {
 				if (properties == null) {
