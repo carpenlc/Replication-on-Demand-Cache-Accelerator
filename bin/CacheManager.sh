@@ -1,6 +1,9 @@
 #!/bin/bash
 
-for i in ../target/lib/*.jar; do
+SCRIPT_DIR=$(dirname `which $0`)
+LIB_DIR="${SCRIPT_DIR}/../target/lib/"
+
+for i in ${LIB_DIR}*.jar; do
     CLASSPATH=$CLASSPATH:$i
 done
 
