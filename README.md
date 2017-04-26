@@ -26,13 +26,22 @@ The Replication-on-Demand application is deployed to redundant Linux servers run
 
 ## Download and Build the Source
 * Minimum requirements:
-    * JDK v1.8.0 (or higher)
-    * GIT v1.7.0 (or higher)
-    * Maven v3.3.8 (or higher)
+    * Java Development Kit (v1.8.0 or higher)
+    * GIT (v1.7 or higher)
+    * Maven (v3.3 or higher)
 * Download source
 ```
 # cd /var/local
 # git clone https://github.com/carpenlc/Replication-on-Demand-Cache-Accelerator.git
+```
+* Configure the properties file for your environment.  The system.properties file must be updated with the following JDBC connection information:
+    * JDBC driver (db.driver - defaulted to oracle.jdbc.driver.OracleDriver)
+    * JDBC connection String (db.connection_string)
+    * Database username (db.user)
+    * Password associated with the database user (db.password)
+```
+# cd /var/local/Replication-on-Demand-Cache-Accelerator/src/main/resources
+# vim system.properties
 ```
 * Build the output JAR file
 ```
