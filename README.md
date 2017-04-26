@@ -25,7 +25,7 @@ The Replication-on-Demand application is deployed to redundant Linux servers run
 ```
 
 ## Download and Build the Source
-* Pre-requisites:
+* Minimum requirements:
     * JDK v1.8.0 (or higher)
     * GIT v1.7.0 (or higher)
     * Maven v3.3.8 (or higher)
