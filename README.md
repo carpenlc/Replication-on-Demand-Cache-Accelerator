@@ -29,4 +29,7 @@ The Replication-on-Demand application is deployed to redundant Linux servers run
     * JDK v1.8.0 (or higher)
     * GIT v1.7.0 (or higher)
     * Maven v3.3.8 (or higher)
-
+* Download source
+```
+# git clone https://github.com/carpenlc/Replication-on-Demand-Cache-Accelerator.git
+```
