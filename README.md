@@ -31,5 +31,11 @@ The Replication-on-Demand application is deployed to redundant Linux servers run
     * Maven v3.3.8 (or higher)
 * Download source
 ```
+# cd /var/local
 # git clone https://github.com/carpenlc/Replication-on-Demand-Cache-Accelerator.git
 ```
+* Build the output JAR file
+```
+# mvn clean install
+```
+## Execute the main CacheManager class
