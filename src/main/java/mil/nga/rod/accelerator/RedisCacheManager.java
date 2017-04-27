@@ -5,6 +5,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import mil.nga.PropertyLoader;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
@@ -30,10 +31,28 @@ public class RedisCacheManager
      */
     private JedisPool pool;
     
+    // Private internal members used if the target redis server is not local
+    private String host = null;
+    private String port = null;
+    
     /**
      * Default constructor used to set up the Redis connection pool.
      */
     private RedisCacheManager() { 
+        PropertyLoader pLoader = PropertyLoader.getInstance();
+        try {
+            setHost(pLoader.getProperty(REDIS_HOSTNAME_PROPERTY));
+        }
+        catch (Exception e) {
+            setHost(DEFAULT_REDIS_HOST);
+        }
+        try {
+            setPort(pLoader.getProperty(REDIS_PORT_PROPERTY));
+        }
+        catch (Exception e) {
+            setHost(DEFAULT_REDIS_PORT);
+        }
+        
         pool = new JedisPool(new JedisPoolConfig(), "localhost");
     }
 
@@ -61,6 +80,15 @@ public class RedisCacheManager
     }
 
     /**
+     * Getter method for the Redis cache host name.
+     * 
+     * @return The host name of the server running the target Redis cache.
+     */
+    public String getHost() {
+        return host;
+    }
+    
+    /**
      * Get a Set containing all of the keys that are currently stored in the 
      * target cache.
      *   
@@ -74,6 +102,15 @@ public class RedisCacheManager
             keySet = jedis.keys("*");
         }
         return keySet;
+    }
+    
+    /**
+     * Getter method for the Redis cache port.
+     * 
+     * @return The port on which the Redis cache is listening.
+     */
+    public String getPort() {
+        return port;
     }
     
     /**
@@ -145,6 +182,24 @@ public class RedisCacheManager
             LOGGER.info("Closing the Jedis connection pool.");
             pool.destroy();
         }
+    }
+    
+    /**
+     * Getter method for the host name on which the Redis cache is running.
+     * 
+     * @param value The host on which the Redis cache is running.
+     */
+    public void setHost(String value) {
+        
+    }
+    
+    /**
+     * Getter method for the Redis cache port.
+     * 
+     * @param value The port on which the Redis cache is listening.
+     */
+    public void setPort(String value) {
+        
     }
     
     /**

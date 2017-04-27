@@ -165,6 +165,122 @@ public class RoDRecordFactory
     }
     
     /**
+     * Get a list of products that match the input NRN/NSN.  
+     * 
+     * @param nrn The NRN to select.
+     * @param nsn The NSN to select.
+     * @return A list of products matching the input NRN/NSN.
+     */
+    public List<Product> getProducts(String nrn, String nsn) {
+        
+        List<Product>     products = new ArrayList<Product>();
+        PreparedStatement stmt     = null;
+        ResultSet         rs       = null;
+        long              start    = System.currentTimeMillis();
+        int               counter  = 0;
+        String            sql      = "select PROD_TYPE, MEDIA_NAME, NRN, "
+                + "NSN, EDITION, LOAD_DATE, FILE_DATE, SEC_CLASS, CLASS_DESC, "
+                + "SEC_REL, REL_DESC, UNIX_PATH, HYPERLINK_URL, ALL_NOTES, "
+                + "ISO3CHR, AOR_CODE, COUNTRY_NAME, PRODUCT_SIZE_BYTES from "
+                + TARGET_TABLE_NAME
+                + " where NRN=? and NSN=? order by FILE_DATE desc";
+        
+            
+        try { 
+            if ((nrn != null) && (!nrn.isEmpty())) {
+                if ((nsn != null) && (!nsn.isEmpty())) {
+                    if (getConnection() != null) {
+        
+                        stmt = getConnection().prepareStatement(sql);
+                        stmt.setString(1, nrn);
+                        stmt.setString(2, nsn);
+                        rs   = stmt.executeQuery();
+                        
+                        while (rs.next()) {
+                            try {
+                                Product product = new Product.ProductBuilder()
+                                        .aorCode(rs.getString("AOR_CODE"))
+                                        .classification(rs.getString("SEC_CLASS"))
+                                        .classificationDescription(
+                                                rs.getString("CLASS_DESC"))
+                                        .countryName(rs.getString("COUNTRY_NAME"))
+                                        .edition(rs.getLong("EDITION"))
+                                        .fileDate(rs.getDate("FILE_DATE"))
+                                        .iso3char(rs.getString("ISO3CHR"))
+                                        .loadDate(rs.getDate("LOAD_DATE"))
+                                        .mediaName(rs.getString("MEDIA_NAME"))
+                                        .notes(rs.getString("ALL_NOTES"))
+                                        .nsn(rs.getString("NSN"))
+                                        .nrn(rs.getString("NRN"))
+                                        .path(rs.getString("UNIX_PATH"))
+                                        .productType(rs.getString("PROD_TYPE"))
+                                        .releasability(rs.getString("SEC_REL"))
+                                        .releasabilityDescription(
+                                                rs.getString("REL_DESC"))
+                                        .size(rs.getLong("PRODUCT_SIZE_BYTES"))
+                                        .url(rs.getString("HYPERLINK_URL"))
+                                        .build();
+                                products.add(product);
+                            }
+                            catch (IllegalStateException ise) {
+                                LOGGER.warn("Unexpected IllegalStateException raised "
+                                        + "while loading [ "
+                                        + TARGET_TABLE_NAME
+                                        + " ] records from "
+                                        + "data store.  Error encountered [ "
+                                        + ise.getMessage()
+                                        + " ].");
+                                counter++;
+                            }
+                        }
+                    }
+                    else {
+                        LOGGER.warn("Unable to obtain a connection to the target "
+                                + "database.  An empty List will be returned to "
+                                + "the caller.");
+                    }
+                }
+                else {
+                    LOGGER.warn("Input NSN is null.  Query wasn't executed.  "
+                            + "Return array is empty.");
+                }
+            }
+            else {
+                LOGGER.warn("Input NRN is null.  Query wasn't executed.  "
+                        + "Return array is empty.");     
+            }
+        }
+        catch (SQLException se) {
+            LOGGER.error("An unexpected SQLException was raised while "
+                    + "attempting to retrieve all [ "
+                    + TARGET_TABLE_NAME
+                    + " ] records from the target data source.  Error "
+                    + "message [ "
+                    + se.getMessage() 
+                    + " ].");
+        }
+        finally {
+            try { 
+                if (rs != null) { rs.close(); }
+            } catch (Exception e) {}
+            try { 
+                if (stmt != null) { stmt.close(); } 
+            } catch (Exception e) {}
+        }
+        
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("[ " 
+                    + products.size()
+                    + " ] records selected in [ "
+                    + (System.currentTimeMillis() - start) 
+                    + " ] ms.  Of the records selected [ "
+                    + counter
+                    + " ] contained data errors.");
+        }
+        return products;
+    }
+    
+    /**
      * Get a list of AOR codes from the back end data source.
      * 
      * @return The list of AOR codes.

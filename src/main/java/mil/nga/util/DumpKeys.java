@@ -4,8 +4,18 @@ import java.util.Set;
 
 import mil.nga.rod.accelerator.RedisCacheManager;
 
+/**
+ * Simple application used to output a list of all keys in the cache.
+ * 
+ * @author L. Craig Carpenter
+ */
 public class DumpKeys {
 
+    /**
+     * Main method.
+     * 
+     * @param args Command line arguments.
+     */
     public static void main(String[] args) {
         try (RedisCacheManager manager = RedisCacheManager.getInstance()) { 
             Set<String> keySet = manager.getKeys();

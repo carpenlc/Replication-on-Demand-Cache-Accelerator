@@ -3,12 +3,34 @@ package mil.nga.rod.accelerator;
 import java.util.Set;
 
 /**
- * Interface defining the methods that the Cache manager code must implement.
+ * Interface defining any constants used, and methods that the Cache manager 
+ * code must implement.
  * 
  * @author L. Craig Carpenter
  */
 public interface CacheManagerI {
 
+    /**
+     * The defailt Redis host
+     */
+    public static final String DEFAULT_REDIS_HOST = "localhost";
+    
+    /**
+     * The defailt Redis port 
+     */
+    public static final String DEFAULT_REDIS_PORT = "6379";
+    
+    /**
+     * Property containing the host name where the redis cache resides.
+     */
+    public static final String REDIS_HOSTNAME_PROPERTY = "redis.host";
+    
+    /**
+     * If Redis is not running on the standard port, this property can be set
+     * identifying the correct port.  
+     */
+    public static final String REDIS_PORT_PROPERTY = "redis.port";
+    
     /**
      * Retrieve a request accelerator record from the cache.
      * 
