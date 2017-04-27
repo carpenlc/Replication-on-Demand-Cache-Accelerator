@@ -36,4 +36,11 @@ public interface CacheManagerI {
      * returns null of unable to retrieve the key from the cache.
      */
     public void put(String key, String value);
+    
+    /**
+     * Remove a key/value pair from the target cache.
+     * 
+     * @param key Key to remove. 
+     */
+    public void remove(String key);
 }

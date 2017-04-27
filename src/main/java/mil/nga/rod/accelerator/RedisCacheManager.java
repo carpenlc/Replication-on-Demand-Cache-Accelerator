@@ -75,6 +75,7 @@ public class RedisCacheManager
         }
         return keySet;
     }
+    
     /**
      * Accessor method for the singleton instance of the 
      * RedisCacheManager class.
@@ -113,6 +114,28 @@ public class RedisCacheManager
         }
     }
  
+    /**
+     * Remove a key/value pair from the target cache.
+     * 
+     * @param key Key to remove. 
+     */
+    public void remove(String key) {
+        if ((key != null) && (!key.isEmpty())) {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Removing key [ "
+                        + key
+                        + " ].");
+            }
+            try (Jedis jedis = pool.getResource()) {
+                jedis.del(key);
+            }
+        }
+        else {
+            LOGGER.error("The input value is null or empty.  No attempt will "
+                    + "be made to remove the key.");
+        }
+    }
+    
     /**
      * Close the Jedis connection pool.
      */
