@@ -200,7 +200,7 @@ public class CacheManager {
             }
             
             QueryRequestAccelerator record = new QueryRequestAccelerator.QueryRequestAcceleratorBuilder()
-                                                .fileDate(new java.sql.Date(System.currentTimeMillis()))
+                                                .fileDate(new java.util.Date(System.currentTimeMillis()))
                                                 .path("/path/to/file")
                                                 .hash("12345-MD5-12345")
                                                 .size(1500L)

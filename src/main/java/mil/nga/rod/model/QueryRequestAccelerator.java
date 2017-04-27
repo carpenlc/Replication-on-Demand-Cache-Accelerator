@@ -1,7 +1,7 @@
 package mil.nga.rod.model;
 
 import java.io.Serializable;
-import java.sql.Date;
+import java.util.Date;
 import java.text.SimpleDateFormat;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
