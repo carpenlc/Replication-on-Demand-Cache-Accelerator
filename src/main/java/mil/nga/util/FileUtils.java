@@ -47,9 +47,9 @@ public class FileUtils {
      * @throws IOException Thrown if there are problems accessing the target
      * file.
      */
-    public static java.sql.Date getActualFileDate(Path path) throws IOException {
+    public static java.util.Date getActualFileDate(Path path) throws IOException {
         
-        java.sql.Date fileDate = new java.sql.Date(0);
+        java.util.Date fileDate = new java.util.Date(0);
         
         if ((path != null) && (Files.exists(path))) {
             BasicFileAttributes attrs = Files.getFileAttributeView(
@@ -57,7 +57,7 @@ public class FileUtils {
                     BasicFileAttributeView.class).readAttributes();
             FileTime t = attrs.lastModifiedTime();
             // LOGGER.info("File time : " + t);
-            fileDate = new java.sql.Date(t.toMillis());
+            fileDate = new java.util.Date(t.toMillis());
         }
         return fileDate;
     }
