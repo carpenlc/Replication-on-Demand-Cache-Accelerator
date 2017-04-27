@@ -1,6 +1,8 @@
 package mil.nga.rod;
 
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -28,6 +30,14 @@ public class JSONSerializer {
 	private static final Logger LOGGER = LoggerFactory.getLogger(
 	        JSONSerializer.class);
 	
+    /** 
+     * DateFormat object used when serializing/deserializing dates.  This 
+     * overrides the default behavior which depends on the type of date being
+     * serialized/deserialized.
+     */
+    private static final DateFormat dateFormatter = 
+            new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+    
 	/**
 	 * Accessor method for the singleton instance of the 
 	 * JSONSerializer class.
@@ -55,7 +65,10 @@ public class JSONSerializer {
             if (json != null) {
                 
                 ObjectMapper mapper = new ObjectMapper();
-                deserialized = mapper.readValue(json, QueryRequestAccelerator.class);
+                mapper.setDateFormat(dateFormatter);
+                deserialized = mapper.readValue(
+                        json, 
+                        QueryRequestAccelerator.class);
                 
             }
         }
@@ -101,6 +114,7 @@ public class JSONSerializer {
     	    if (json != null) {
     	        
         	    ObjectMapper mapper = new ObjectMapper();
+        	    mapper.setDateFormat(dateFormatter);
         	    CollectionType outputType = mapper.getTypeFactory()
         	            .constructCollectionType(List.class, String.class);
         	    deserialized = mapper.readValue(json, outputType);
@@ -147,6 +161,7 @@ public class JSONSerializer {
 		if (obj != null) {
 			try {
 				ObjectMapper mapper = new ObjectMapper();
+				mapper.setDateFormat(dateFormatter);
 				json = mapper.writeValueAsString(obj);
 			}
 			catch (JsonProcessingException jpe) {
