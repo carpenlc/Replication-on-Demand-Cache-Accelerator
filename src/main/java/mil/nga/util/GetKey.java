@@ -1,11 +1,13 @@
 package mil.nga.util;
 
-import java.util.Set;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import mil.nga.rod.accelerator.RedisCacheManager;
+import mil.nga.rod.jdbc.RoDRecordFactory;
+import mil.nga.rod.model.Product;
 import mil.nga.util.Options.Multiplicity;
 import mil.nga.util.Options.Separator;
 
@@ -43,10 +45,48 @@ public class GetKey {
      */
     public GetKey(String key, boolean getISORecords) {
         printKeyValue(key);
+        if (getISORecords) {
+            printISORecords(key);
+        }
+    }
+    
+    public String getNRNFromKey(String key) {
+        String NRN = null;
+        String[] array = key.split("\\+");
+        if (array.length == 2) {
+            NRN = array[1];
+        }
+        return NRN;
+    }
+    
+    public String getNSNFromKey(String key) { 
+        String NSN = null;
+        String[] array = key.split("\\+");
+        if (array.length == 2) {
+            NSN = array[0];
+        }
+        return NSN;
+    }
+    
+    public void printISORecords(String key) {
+        
+        try (RoDRecordFactory factory = RoDRecordFactory.getInstance()) {
+            List<Product> products = factory.getProducts(getNRNFromKey(key), getNSNFromKey(key));
+            if (products.size() > 0) {
+                for (Product prod : products) {
+                    System.out.println(prod.toString());
+                }
+            }
+            
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
     }
     
     /**
      * Print out the key/value pair.
+     * 
      * @param key The key to query for.
      */
     public void printKeyValue(String key) {
@@ -126,7 +166,7 @@ public class GetKey {
             printISORecords = true;
         }
         
-        new GetKey(key, printISORecords).execute();
+        new GetKey(key, printISORecords).getNSNFromKey(key);
      
     }
 }
