@@ -59,6 +59,7 @@ public class CacheManager {
         int  successCounter = 0;
         int  failedCounter  = 0;
         int  totalCounter   = 0;
+        int  duplicateKeys  = 0;
         
         LOGGER.info("Cache update started at [ "
                 + dateFormatter.format(new Date(System.currentTimeMillis()))
@@ -69,7 +70,9 @@ public class CacheManager {
             List<Product> records = RoDRecordFactory.getInstance().getAllProducts();
             
             if ((records != null) && (records.size() > 0)) {
+                
                 AcceleratorRecordFactory factory = new AcceleratorRecordFactory();
+                
                 for (Product record : records) {
                     totalCounter++;
                     String key = factory.getKey(record);
@@ -89,6 +92,12 @@ public class CacheManager {
                                     + key
                                     + " ].");
                         }
+                    }
+                    else {
+                        duplicateKeys++;
+                        LOGGER.info("Key already exists [ "
+                                + key
+                                + " ].");
                     }
                 }
             }
@@ -154,7 +163,9 @@ public class CacheManager {
                 + successCounter 
                 + " ] were successfully updated, [ "
                 + failedCounter
-                + " ] records failed to update.");
+                + " ] records failed to update, [ "
+                + duplicateKeys
+                + " ] already exist.");
     }
     
     
