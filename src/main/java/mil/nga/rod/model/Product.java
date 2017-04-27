@@ -297,8 +297,11 @@ public class Product implements Serializable {
         sb.append(" ], Media Name => [ ");
         sb.append(getMediaName());
         sb.append(" ], Load Date => [ ");
-        sb.append(newLine);
+        sb.append(getLoadDateString());
+        sb.append(" ], Path => [ ");
+        sb.append(getPath());
         sb.append(" ].");
+        sb.append(newLine);
         
         return sb.toString();
     }
