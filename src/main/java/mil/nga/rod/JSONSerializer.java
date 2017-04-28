@@ -24,12 +24,12 @@ import mil.nga.rod.model.QueryRequestAccelerator;
  */
 public class JSONSerializer {
 
-	/**
-	 * Set up the LogBack system for use throughout the class
-	 */		
-	private static final Logger LOGGER = LoggerFactory.getLogger(
-	        JSONSerializer.class);
-	
+    /**
+     * Set up the LogBack system for use throughout the class
+     */        
+    private static final Logger LOGGER = LoggerFactory.getLogger(
+            JSONSerializer.class);
+    
     /** 
      * DateFormat object used when serializing/deserializing dates.  This 
      * overrides the default behavior which depends on the type of date being
@@ -38,18 +38,18 @@ public class JSONSerializer {
     private static final DateFormat dateFormatter = 
             new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
     
-	/**
-	 * Accessor method for the singleton instance of the 
-	 * JSONSerializer class.
-	 * 
-	 * @return The singleton instance of the JSONSerializer .
-	 * class.
-	 */
-	public static JSONSerializer getInstance() {
-		return JSONSerializerHolder.getSingleton();
-	}	
-	
-	/**
+    /**
+     * Accessor method for the singleton instance of the 
+     * JSONSerializer class.
+     * 
+     * @return The singleton instance of the JSONSerializer .
+     * class.
+     */
+    public static JSONSerializer getInstance() {
+        return JSONSerializerHolder.getSingleton();
+    }    
+    
+    /**
      * Method used to deserialize a JSON array into an object or type 
      * <code>mil.nga.rod.model.QueryRequestAccelerator</code>
      * 
@@ -99,36 +99,36 @@ public class JSONSerializer {
         return deserialized;
     }
     
-	/**
-	 * Method used to deserialize a JSON array into a List of String objects.
-	 * 
-	 * @param json The String in JSON format.
-	 * @return A <code>java.util.List</code> object containing String objects.
-	 * Null if any exceptions were encountered while deserializing the String.
-	 */
-	public List<String> deserializeToStringList(String json) {
-	    
-	    List<String> deserialized = null;
-	    
-	    try {
-    	    if (json != null) {
-    	        
-        	    ObjectMapper mapper = new ObjectMapper();
-        	    mapper.setDateFormat(dateFormatter);
-        	    CollectionType outputType = mapper.getTypeFactory()
-        	            .constructCollectionType(List.class, String.class);
-        	    deserialized = mapper.readValue(json, outputType);
-        	    
-    	    }
-	    }
-	    catch (JsonMappingException jme) {
+    /**
+     * Method used to deserialize a JSON array into a List of String objects.
+     * 
+     * @param json The String in JSON format.
+     * @return A <code>java.util.List</code> object containing String objects.
+     * Null if any exceptions were encountered while deserializing the String.
+     */
+    public List<String> deserializeToStringList(String json) {
+        
+        List<String> deserialized = null;
+        
+        try {
+            if (json != null) {
+                
+                ObjectMapper mapper = new ObjectMapper();
+                mapper.setDateFormat(dateFormatter);
+                CollectionType outputType = mapper.getTypeFactory()
+                        .constructCollectionType(List.class, String.class);
+                deserialized = mapper.readValue(json, outputType);
+                
+            }
+        }
+        catch (JsonMappingException jme) {
             LOGGER.error("Unexpected JsonMappingException encountered "
                     + "while attempting to deserialize the input "
                     + "JSON to a List of String objects.  Exception "
                     + "message [ "
                     + jme.getMessage()
                     + " ].");
-	    }
+        }
         catch (JsonParseException jpe) {
             LOGGER.error("Unexpected JsonParseException encountered "
                     + "while attempting to deserialize the input "
@@ -137,74 +137,74 @@ public class JSONSerializer {
                     + jpe.getMessage()
                     + " ].");
         }
-	    catch (IOException ioe) {
+        catch (IOException ioe) {
             LOGGER.error("Unexpected IOException encountered "
                     + "while attempting to deserialize the input "
                     + "JSON into a List of String objects.  Exception "
                     + "message [ "
                     + ioe.getMessage()
                     + " ].");
-	    }
-	    return deserialized;
-	}
-	
-	/**
-	 * Convert the input object into JSON format. 
-	 * 
-	 * @param obj A populated object.
-	 * @return A JSON String representation of the input Object.
-	 */
-	public String marshall(Object obj) {
-		
-		String json = "null";
-		
-		if (obj != null) {
-			try {
-				ObjectMapper mapper = new ObjectMapper();
-				mapper.setDateFormat(dateFormatter);
-				json = mapper.writeValueAsString(obj);
-			}
-			catch (JsonProcessingException jpe) {
-				LOGGER.error("Unexpected JsonProcessingException encountered "
-						+ "while attempting to marshall the input "
-						+ "object to JSON.  Exception message [ "
-						+ jpe.getMessage()
-						+ " ].");
-			}
-		}
-		else {
-			LOGGER.warn("Input object is null.  Unable to "
-					+ "marshall the object to JSON.");
-		}
-		return json;
-	}
-	
-	/**
-	 * Static inner class used to construct the Singleton object.  This class
-	 * exploits the fact that classes are not loaded until they are referenced
-	 * therefore enforcing thread safety without the performance hit imposed
-	 * by the <code>synchronized</code> keyword.
-	 * 
-	 * @author L. Craig Carpenter
-	 */
-	public static class JSONSerializerHolder {
-		
-		/**
-		 * Reference to the Singleton instance of the 
-		 * JSONSerializer
-		 */
-		private static JSONSerializer _instance = 
-				new JSONSerializer();
-	
-		/**
-		 * Accessor method for the singleton instance of the 
-		 * JSONSerializer.
-		 * @return The Singleton instance of the 
-		 * JSONSerializer.
-		 */
-	    public static JSONSerializer getSingleton() {
-	    	return _instance;
-	    }
-	    
-	}
+        }
+        return deserialized;
+    }
+    
+    /**
+     * Convert the input object into JSON format. 
+     * 
+     * @param obj A populated object.
+     * @return A JSON String representation of the input Object.
+     */
+    public String marshall(Object obj) {
+        
+        String json = "null";
+        
+        if (obj != null) {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                mapper.setDateFormat(dateFormatter);
+                json = mapper.writeValueAsString(obj);
+            }
+            catch (JsonProcessingException jpe) {
+                LOGGER.error("Unexpected JsonProcessingException encountered "
+                        + "while attempting to marshall the input "
+                        + "object to JSON.  Exception message [ "
+                        + jpe.getMessage()
+                        + " ].");
+            }
+        }
+        else {
+            LOGGER.warn("Input object is null.  Unable to "
+                    + "marshall the object to JSON.");
+        }
+        return json;
+    }
+    
+    /**
+     * Static inner class used to construct the Singleton object.  This class
+     * exploits the fact that classes are not loaded until they are referenced
+     * therefore enforcing thread safety without the performance hit imposed
+     * by the <code>synchronized</code> keyword.
+     * 
+     * @author L. Craig Carpenter
+     */
+    public static class JSONSerializerHolder {
+        
+        /**
+         * Reference to the Singleton instance of the 
+         * JSONSerializer
+         */
+        private static JSONSerializer _instance = 
+                new JSONSerializer();
+    
+        /**
+         * Accessor method for the singleton instance of the 
+         * JSONSerializer.
+         * @return The Singleton instance of the 
+         * JSONSerializer.
+         */
+        public static JSONSerializer getSingleton() {
+            return _instance;
+        }
+        
+    }
 }

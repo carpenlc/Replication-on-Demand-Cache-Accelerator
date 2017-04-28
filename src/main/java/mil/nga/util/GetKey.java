@@ -11,6 +11,13 @@ import mil.nga.rod.model.Product;
 import mil.nga.util.Options.Multiplicity;
 import mil.nga.util.Options.Separator;
 
+/**
+ * Command line tool used to dump the value associated with a key in the 
+ * local redis cache.  This tool was written for debugging issues with 
+ * data stored in the cache.
+ * 
+ * @author L. Craig Carpenter
+ */
 public class GetKey {
     
     /**
@@ -41,7 +48,7 @@ public class GetKey {
      * record from the data store.
      * 
      * @param key
-     * @param getISORecords
+     * @param getISORecords If true 
      */
     public GetKey(String key, boolean getISORecords) {
         printKeyValue(key);
@@ -50,6 +57,14 @@ public class GetKey {
         }
     }
     
+    /**
+     * Based on the key design in which keys are the combination of NSN and 
+     * NRN of a given product, the NRN is the second half of the key.  The
+     * NRN is used to extract the data from the backing data store.
+     * 
+     * @param key The target key.
+     * @return The product NRN.
+     */
     public String getNRNFromKey(String key) {
         String NRN = null;
         String[] array = key.split("\\+");
@@ -59,6 +74,14 @@ public class GetKey {
         return NRN;
     }
     
+    /**
+     * Based on the key design in which keys are the combination of NSN and 
+     * NRN of a given product, the NSN is the first half of the key.  The
+     * NSN is used to extract the data from the backing data store.
+     * 
+     * @param key The target key.
+     * @return The product NRN.
+     */
     public String getNSNFromKey(String key) { 
         String NSN = null;
         String[] array = key.split("\\+");
@@ -68,10 +91,18 @@ public class GetKey {
         return NSN;
     }
     
+    /**
+     * Print out the records from the backing data store that match the NSN and
+     * NRN contained in the key. 
+     *  
+     * @param key The target key.
+     */
     public void printISORecords(String key) {
         
         try (RoDRecordFactory factory = RoDRecordFactory.getInstance()) {
-            List<Product> products = factory.getProducts(getNRNFromKey(key), getNSNFromKey(key));
+            List<Product> products = factory.getProducts(
+                    getNRNFromKey(key), 
+                    getNSNFromKey(key));
             if (products.size() > 0) {
                 for (Product prod : products) {
                     System.out.println(prod.toString());
@@ -105,11 +136,6 @@ public class GetKey {
                         + " ].");
             }
         }
-    }
-    public void execute() {
-        
-        
-        
     }
     
     /**

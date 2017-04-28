@@ -8,16 +8,16 @@ package mil.nga.exceptions;
  */
 public class PropertyNotFoundException extends Exception {
 
-	/**
+    /**
      * Eclipse-generated serialVersionUID
      */
     private static final long serialVersionUID = -6991871513486495993L;
 
     /** 
-	 * Default constructor requiring a message String.
-	 * @param msg Information identifying why the exception was raised.
-	 */
-	public PropertyNotFoundException(String msg) {
-		super(msg);
-	}
+     * Default constructor requiring a message String.
+     * @param msg Information identifying why the exception was raised.
+     */
+    public PropertyNotFoundException(String msg) {
+        super(msg);
+    }
 }
