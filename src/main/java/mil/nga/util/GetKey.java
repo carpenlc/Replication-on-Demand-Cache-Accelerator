@@ -192,7 +192,7 @@ public class GetKey {
             printISORecords = true;
         }
         
-        new GetKey(key, printISORecords).getNSNFromKey(key);
+        new GetKey(key, printISORecords);
      
     }
 }

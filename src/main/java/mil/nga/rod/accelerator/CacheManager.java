@@ -1,6 +1,7 @@
 package mil.nga.rod.accelerator;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -16,6 +17,7 @@ import mil.nga.rod.JSONSerializer;
 import mil.nga.rod.jdbc.RoDRecordFactory;
 import mil.nga.rod.model.Product;
 import mil.nga.rod.model.QueryRequestAccelerator;
+import mil.nga.util.FileUtils;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 
 
@@ -51,65 +53,50 @@ public class CacheManager {
     public CacheManager() { }
     
     /**
-     * Main method containing the logic required to update the accelerator cache.
+     * See if the on-disk file changed in size since the last time the cache 
+     * was updated.  
+     * 
+     * @param value The cached data.
+     * @return True if the on-disk data has changed since the last update.
+     * @throws IOException Thrown if there are issues accessing the on-disk 
+     * file.
      */
-    public void updateAcceleratorCache() {
-    
-        long start          = System.currentTimeMillis();
-        int  successCounter = 0;
-        int  failedCounter  = 0;
-        int  totalCounter   = 0;
-        int  duplicateKeys  = 0;
+    public boolean isUpdateRequired(String value) throws IOException {
         
-        LOGGER.info("Cache update started at [ "
-                + dateFormatter.format(new Date(System.currentTimeMillis()))
-                + " ].");
+        boolean needsUpdate = false;
         
-        try {
+        if ((value != null) && (!value.isEmpty())) {
             
-            List<Product> records = RoDRecordFactory.getInstance().getAllProducts();
+            QueryRequestAccelerator record = JSONSerializer
+                    .getInstance()
+                    .deserializeToQueryRequestAccelerator(value);
+            long size = FileUtils.getActualFileSize(Paths.get(record.getPath()));
             
-            if ((records != null) && (records.size() > 0)) {
+            if (size != record.getSize()) {
                 
-                AcceleratorRecordFactory factory = new AcceleratorRecordFactory();
-                
-                for (Product record : records) {
-                    totalCounter++;
-                    String key = factory.getKey(record);
-                    if (RedisCacheManager.getInstance().get(key) == null) {
-                        
-                        String value = factory.getValue(
-                                factory.buildRecord(record));
-                        
-                        if (value != null) {
-                            RedisCacheManager.getInstance().put(key, value);
-                            successCounter++;
-                        }
-                        else {
-                            failedCounter++;
-                            LOGGER.warn("Unable to create accelerator record "
-                                    + "for key [ "
-                                    + key
-                                    + " ].");
-                        }
-                    }
-                    else {
-                        duplicateKeys++;
-                        LOGGER.info("Key already exists [ "
-                                + key
-                                + " ].");
-                    }
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("File [ "
+                            + record.getPath()
+                            + " ] has changed.  Cache record will be updated.");
                 }
-            }
-            else {
-                LOGGER.error("There are no records in the target data store.");
+                
+                needsUpdate = true;
             }
         }
-        catch (IOException ioe) {
-            LOGGER.error("Unexpected IOException raised while attempting "
-                    + "to access on-disk files.  Error message [ "
-                    + ioe.getMessage()
-                    + " ]. ");
+        return needsUpdate;
+    }
+    
+    /**
+     * Get a list of all products in the backing data store.
+     * 
+     * @return The list of all products in the backing data store.
+     */
+    public List<Product> getAllProducts() {
+
+        List<Product> products = null;
+        
+        try (RoDRecordFactory factory = RoDRecordFactory.getInstance()) {
+            products = factory.getAllProducts();
         }
         catch (PropertyNotFoundException pnfe) {
             LOGGER.error("PropertyNotFoundException raised "
@@ -144,28 +131,81 @@ public class CacheManager {
                     + " ].  Please ensure that the cache is available "
                     + "or disable the caching feature.");
         }
-        finally {
-            try {
-                RedisCacheManager.getInstance().close(); 
-                RoDRecordFactory.getInstance().close();
-            } 
-            catch (Exception e) {}
-        }
-
+        
+        return products;
+    }
+    
+    /**
+     * Main method containing the logic required to update the accelerator cache.
+     */
+    public void updateAcceleratorCache() {
+    
+        long start          = System.currentTimeMillis();
+        int  successCounter = 0;
+        int  failedCounter  = 0;
+        int  totalCounter   = 0;
+        
+        LOGGER.info("Cache update started at [ "
+                + dateFormatter.format(new Date(System.currentTimeMillis()))
+                + " ].");
+            
+        List<Product> records = getAllProducts();
+        
+        if ((records != null) && (records.size() > 0)) {
+            
+            AcceleratorRecordFactory factory = new AcceleratorRecordFactory();
+            try (RedisCacheManager cacheManager = RedisCacheManager.getInstance()) {
+                for (Product record : records) {
+                    
+                    totalCounter++;
+                    try {
+                        
+                        String key   = factory.getKey(record);
+                        String value = RedisCacheManager.getInstance().get(key);
+                        
+                        if ((value == null) || (isUpdateRequired(value))) {
+                            
+                            value = factory.getValue(
+                                    factory.buildRecord(record));
+                            
+                            if (value != null) {
+                                RedisCacheManager.getInstance().put(key, value);
+                                successCounter++;
+                            }
+                            else {
+                                failedCounter++;
+                            }
+                        }
+                    }
+                    catch (IOException ioe) {
+                        failedCounter++;
+                        LOGGER.error("Unexpected IOException raised while "
+                                + "attempting to access on-disk file [ "
+                                + record.getPath()
+                                + " ].  Error message [ "
+                                + ioe.getMessage()
+                                + " ].  Cache record not updated.");
+                    }
+                } // end for
+            } // end try-with-resources
+        } 
+        else {
+            LOGGER.error("Data store unavailable.  (Query did not return "
+                    + "any records).");
+        }       
+        
         LOGGER.info("Cache update completed at [ "
                 + dateFormatter.format(new Date(System.currentTimeMillis()))
                 + " ] in [ "
                 + (System.currentTimeMillis() - start)
                 + " ] ms.");
-        LOGGER.info("[ "
+        LOGGER.info("Processed [ "
                 + totalCounter
-                + " ] records were processed.  [ "
+                + " ] records.  [ "
                 + successCounter 
                 + " ] were successfully updated, [ "
                 + failedCounter
-                + " ] records failed to update, [ "
-                + duplicateKeys
-                + " ] already exist.");
+                + " ] records failed to update.");
     }
     
     
