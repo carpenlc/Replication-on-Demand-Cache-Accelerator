@@ -34,11 +34,15 @@ The Replication-on-Demand application is deployed to redundant Linux servers run
 # cd /var/local
 # git clone https://github.com/carpenlc/Replication-on-Demand-Cache-Accelerator.git
 ```
-* Configure the properties file for your environment.  The system.properties file must be updated with the following JDBC connection information:
-    * JDBC driver (db.driver - defaulted to oracle.jdbc.driver.OracleDriver)
-    * JDBC connection String (db.connection_string)
-    * Database username (db.user)
-    * Password associated with the database user (db.password)
+* Configure the properties file for your environment.  The system.properties file must be updated with the database and cache connection information:
+    * JDBC connection information:
+        * db.driver  - The JDBC driver class (defaulted to oracle.jdbc.driver.OracleDriver)
+        * db.connection_string  - The JDBC connection String 
+        * db.user  - Database username
+        * db.password  - Password associated with the database user
+    * Redis cache connection data (only if running somewhere other than the local server and/or on a non-standard port):
+        * redis.host - Host running the Redis cache
+        * redis.port - Port on which the Redis server is listening
 ```
 # cd /var/local/Replication-on-Demand-Cache-Accelerator/src/main/resources
 # vim system.properties
