@@ -79,16 +79,18 @@ public class AcceleratorRecordFactory {
     public String getValue(QueryRequestAccelerator record) {
         String value = null;
         if (record != null) {
-            value = JSONSerializer.getInstance().marshall(record);
+            value = JSONSerializer.getInstance().serialize(record);
         }
         return value;
     }
     
     
     /**
+     * Generate a <code>QueryRequestAccelerator</code> record for storage 
+     * in the target cache.
      * 
-     * @param prod
-     * @return
+     * @param prod The database record identifying an on-disk ISO file.
+     * @return A QueryRequestAccelerator record to add to the cache.
      * @throws IOException Thrown if there are problems accessing the target 
      * file.
      */

@@ -10,7 +10,6 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import mil.nga.PropertyLoader;
 import mil.nga.exceptions.PropertiesNotLoadedException;
 import mil.nga.exceptions.PropertyNotFoundException;
 import mil.nga.rod.JSONSerializer;
@@ -216,46 +215,6 @@ public class CacheManager {
      */
     public static void main(String[] args) {
         try {
-        System.out.println(PropertyLoader.getInstance().loadProperties().toString());
-
-            List<String> list = RoDRecordFactory.getInstance().getAORCodes();
-            String test = JSONSerializer.getInstance().marshall(list);
-            
-            List<String> list2 = JSONSerializer.getInstance().deserializeToStringList(test);
-            for (String item : list2) {
-                System.out.println(item);
-            }
-            list = RoDRecordFactory.getInstance().getCountries();
-            test = JSONSerializer.getInstance().marshall(list);
-            list2 = JSONSerializer.getInstance().deserializeToStringList(test);
-            for (String item : list2) {
-                System.out.println(item);
-            }
-            
-            list = RoDRecordFactory.getInstance().getProductTypes();
-            test = JSONSerializer.getInstance().marshall(list);
-            list2 = JSONSerializer.getInstance().deserializeToStringList(test);
-            for (String item : list) {
-                System.out.println(item);
-            }
-            
-            QueryRequestAccelerator record = new QueryRequestAccelerator.QueryRequestAcceleratorBuilder()
-                                                .fileDate(new java.util.Date(System.currentTimeMillis()))
-                                                .path("/path/to/file")
-                                                .hash("12345-MD5-12345")
-                                                .size(1500L)
-                                                .build();
-            
-            String marshalled = JSONSerializer.getInstance().marshall(record);
-            System.out.println(marshalled);
-            QueryRequestAccelerator record2 = JSONSerializer.getInstance().deserializeToQueryRequestAccelerator(marshalled);
-            System.out.println(record2.toString());
-            
-            List<Product> prods = RoDRecordFactory.getInstance().getAllProducts();
-            
-            //RoDRecordFactory.getInstance().close();
-            
-            
             (new CacheManager()).updateAcceleratorCache();
         }
         catch (Exception e) {

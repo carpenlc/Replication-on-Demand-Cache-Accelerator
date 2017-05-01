@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.TimeZone;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +38,10 @@ public class JSONSerializer {
      */
     private static final DateFormat dateFormatter = 
             new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+    
+    static {
+        dateFormatter.setTimeZone(TimeZone.getTimeZone("GMT"));
+    }
     
     /**
      * Accessor method for the singleton instance of the 
@@ -154,7 +159,7 @@ public class JSONSerializer {
      * @param obj A populated object.
      * @return A JSON String representation of the input Object.
      */
-    public String marshall(Object obj) {
+    public String serialize(Object obj) {
         
         String json = "null";
         
