@@ -23,6 +23,9 @@ public class DumpKeys {
                 for (String key : keySet) {
                     System.out.println(key);
                 }
+                System.out.println("The cache contains [ "
+                        + keySet.size()
+                        + " ] elements.");
             }
             else {
                 System.out.println("The cache is empty.");
