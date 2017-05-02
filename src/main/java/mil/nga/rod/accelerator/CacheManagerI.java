@@ -18,7 +18,7 @@ public interface CacheManagerI {
     /**
      * The defailt Redis port 
      */
-    public static final String DEFAULT_REDIS_PORT = "6379";
+    public static final int DEFAULT_REDIS_PORT = 6379;
     
     /**
      * Property containing the host name where the redis cache resides.

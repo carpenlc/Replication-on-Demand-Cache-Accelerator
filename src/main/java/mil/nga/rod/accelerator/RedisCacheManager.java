@@ -33,7 +33,7 @@ public class RedisCacheManager
     
     // Private internal members used if the target redis server is not local
     private String host = null;
-    private String port = null;
+    private int    port = DEFAULT_REDIS_PORT;
     
     /**
      * Default constructor used to set up the Redis connection pool.
@@ -47,13 +47,14 @@ public class RedisCacheManager
             setHost(DEFAULT_REDIS_HOST);
         }
         try {
-            setPort(pLoader.getProperty(REDIS_PORT_PROPERTY));
+            setPort(Integer.parseInt(
+                    pLoader.getProperty(REDIS_PORT_PROPERTY)));
         }
         catch (Exception e) {
-            setHost(DEFAULT_REDIS_PORT);
+            setPort(DEFAULT_REDIS_PORT);
         }
         
-        pool = new JedisPool(new JedisPoolConfig(), "localhost");
+        pool = new JedisPool(new JedisPoolConfig(), getHost(), getPort());
     }
 
     /**
@@ -109,7 +110,7 @@ public class RedisCacheManager
      * 
      * @return The port on which the Redis cache is listening.
      */
-    public String getPort() {
+    public int getPort() {
         return port;
     }
     
@@ -190,7 +191,10 @@ public class RedisCacheManager
      * @param value The host on which the Redis cache is running.
      */
     public void setHost(String value) {
-        
+        if ((value == null) || (value.isEmpty())) { 
+            host = DEFAULT_REDIS_HOST;
+        }
+        host = value;
     }
     
     /**
@@ -198,8 +202,8 @@ public class RedisCacheManager
      * 
      * @param value The port on which the Redis cache is listening.
      */
-    public void setPort(String value) {
-        
+    public void setPort(int value) {
+        port = value;
     }
     
     /**
