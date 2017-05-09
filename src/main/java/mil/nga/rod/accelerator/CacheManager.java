@@ -152,20 +152,19 @@ public class CacheManager {
         
         if ((records != null) && (records.size() > 0)) {
             
-            AcceleratorRecordFactory factory = new AcceleratorRecordFactory();
             try (RedisCacheManager cacheManager = RedisCacheManager.getInstance()) {
                 for (Product record : records) {
                     
                     totalCounter++;
                     try {
                         
-                        String key   = factory.getKey(record);
+                        String key   = AcceleratorRecordFactory.getInstance().getKey(record);
                         String value = RedisCacheManager.getInstance().get(key);
                         
                         if ((value == null) || (isUpdateRequired(value))) {
                             
-                            value = factory.getValue(
-                                    factory.buildRecord(record));
+                            value = AcceleratorRecordFactory.getInstance().getValue(
+                                    AcceleratorRecordFactory.getInstance().buildRecord(record));
                             
                             if (value != null) {
                                 RedisCacheManager.getInstance().put(key, value);
