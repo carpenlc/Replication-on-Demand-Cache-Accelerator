@@ -35,6 +35,22 @@ public class AcceleratorRecordFactory {
     public static final HashType HASH_TYPE = HashType.MD5;
 
     /**
+     * Default constructor enforcing the singleton design pattern.
+     */
+    private AcceleratorRecordFactory () {}
+    
+    /**
+     * Accessor method for the singleton instance of the 
+     * AcceleratorRecordFactory class.
+     * 
+     * @return The singleton instance of the AcceleratorRecordFactory.
+     * class.
+     */
+    public static AcceleratorRecordFactory getInstance() {
+        return AcceleratorRecordFactoryHolder.getSingleton();
+    } 
+    
+    /**
      * Calculate the key that will be used for storage/lookup of the query
      * accelerator records.  
      * 
@@ -67,6 +83,40 @@ public class AcceleratorRecordFactory {
                     + "store.");
         }
         return sb.toString();
+    }
+    
+    /**
+     * Based on the key design in which keys are the combination of NSN and 
+     * NRN of a given product, the NRN is the second half of the key.  The
+     * NRN is used to extract the data from the backing data store.
+     * 
+     * @param key The target key.
+     * @return The product NRN.
+     */
+    public String getNRNFromKey(String key) {
+        String NRN = null;
+        String[] array = key.split("\\+");
+        if (array.length == 2) {
+            NRN = array[1];
+        }
+        return NRN;
+    }
+    
+    /**
+     * Based on the key design in which keys are the combination of NSN and 
+     * NRN of a given product, the NSN is the first half of the key.  The
+     * NSN is used to extract the data from the backing data store.
+     * 
+     * @param key The target key.
+     * @return The product NRN.
+     */
+    public String getNSNFromKey(String key) { 
+        String NSN = null;
+        String[] array = key.split("\\+");
+        if (array.length == 2) {
+            NSN = array[0];
+        }
+        return NSN;
     }
     
     /**
@@ -150,5 +200,35 @@ public class AcceleratorRecordFactory {
                     + "store.");
         }
         return record;
+    }
+    
+    /**
+     * Static inner class used to construct the Singleton object.  This class
+     * exploits the fact that classes are not loaded until they are referenced
+     * therefore enforcing thread safety without the performance hit imposed
+     * by the <code>synchronized</code> keyword.
+     * 
+     * @author L. Craig Carpenter
+     */
+    public static class AcceleratorRecordFactoryHolder {
+        
+        /**
+         * Reference to the Singleton instance of the AcceleratorRecordFactory.
+         */
+        private static AcceleratorRecordFactory _instance = null;
+    
+        /**
+         * Accessor method for the singleton instance of the 
+         * AcceleratorRecordFactory.
+         * 
+         * @return The Singleton instance of the AcceleratorRecordFactory.
+         */
+        public static AcceleratorRecordFactory getSingleton() {
+            if (_instance == null) {
+                _instance = new AcceleratorRecordFactory();
+            }
+            return _instance;
+        }
+        
     }
 }
