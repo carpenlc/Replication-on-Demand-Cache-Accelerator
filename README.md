@@ -1,5 +1,5 @@
 # Replication-on-Demand-Cache-Accelerator
-This is an optional component associated with the "Replication on Demand" project that populates and maintains a Redis cache for use in increasing the performance of the overall application.  It's main use is caching pre-computed file hashes.  The software is compiled via Maven into an executable JAR file. 
+This is an optional component associated with the "Replication on Demand" project that populates and maintains a Redis cache for use in increasing the performance of the overall application.  It's main use is caching pre-computed file hashes.  The software is compiled via Maven into a command-line-based JAR file. 
 
 ## Installing Redis
 The Replication-on-Demand application is deployed to redundant Linux servers running RHEL6.
@@ -52,3 +52,7 @@ The Replication-on-Demand application is deployed to redundant Linux servers run
 # mvn clean install
 ```
 ## Execute the main CacheManager class
+The output JAR file can be executed as a command-line tool.  In the production environment we execute the code via a cron job that runs once each hour at minute 0.  The relevant cron entry is as follows:
+```
+0 * * * * /var/local/Replication-on-Demand-Cache-Accelerator/bin/CacheManager.sh >> /var/log/applications/CacheManager.log 2>&1
+```
