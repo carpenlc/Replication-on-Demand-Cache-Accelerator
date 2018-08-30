@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Date;
 import java.text.SimpleDateFormat;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 
@@ -17,7 +18,8 @@ import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
  * @author L. Craig Carpenter
  */
 @JsonDeserialize(builder = QueryRequestAccelerator.QueryRequestAcceleratorBuilder.class)
-public class QueryRequestAccelerator implements Serializable {
+public class QueryRequestAccelerator 
+		extends ProductDecorator implements Serializable {
 
     /* Sample command for creating the backing data table (Oracle):
      
@@ -29,6 +31,7 @@ public class QueryRequestAccelerator implements Serializable {
         CONSTRAINT UNIX_PATH_PK PRIMARY KEY (UNIX_PATH)
     );
 
+    The primary key is actually extracted from the parent class (i.e. Product).
 */
     /**
      * Eclipse-generated serialVersionUID
@@ -45,7 +48,6 @@ public class QueryRequestAccelerator implements Serializable {
     private final Date   fileDate;
     private final String hash;
     private final long   size;
-    private final String path;
     
     /**
      * Constructor used to set all of the required internal members.
@@ -53,10 +55,10 @@ public class QueryRequestAccelerator implements Serializable {
      * @param builder Populated builder object.
      */
     private QueryRequestAccelerator(QueryRequestAcceleratorBuilder builder) {
+    	super(builder.product);
         this.fileDate = builder.fileDate;
         this.hash     = builder.hash;
         this.size     = builder.size;
-        this.path     = builder.path;
     }
     
     /**
@@ -84,11 +86,12 @@ public class QueryRequestAccelerator implements Serializable {
     }
     
     /**
-     * Getter method for the file path attribute.
-     * @return The file path attribute.
+     * Getter method for the MD5 hash of the target file.
+     * @return The MD5 hash of the target file.
      */
+    @JsonIgnore
     public String getPath() {
-        return path;
+        return getProduct().getPath();
     }
     
     /**
@@ -100,9 +103,8 @@ public class QueryRequestAccelerator implements Serializable {
         String        newLine = System.getProperty("line.separator");
         
         sb.append(newLine);
-        sb.append("File => [ ");
-        sb.append(getPath());
-        sb.append(" ], Size => [ ");
+        sb.append(super.toString());
+        sb.append("On-disk file data:  Size => [ ");
         sb.append(getSize());
         sb.append(" ], Hash => [ ");
         sb.append(getHash());
@@ -125,10 +127,10 @@ public class QueryRequestAccelerator implements Serializable {
     public static class QueryRequestAcceleratorBuilder {
         
         // Private internal members.
-        private Date   fileDate;
-        private String hash;
-        private long   size;
-        private String path;
+    	private Product product;
+        private Date    fileDate;
+        private String  hash;
+        private long    size;
         
         /**
          * Method used to actually construct the
@@ -178,9 +180,9 @@ public class QueryRequestAccelerator implements Serializable {
          * Setter method for the HYPERLINK_URL attribute.
          * @param value The HYPERLINK_URL attribute.
          */
-        public QueryRequestAcceleratorBuilder path(String value) {
+        public QueryRequestAcceleratorBuilder product(Product value) {
             if (value != null) {
-                path = value;
+                product = value;
             }
             return this;
         }
@@ -192,6 +194,7 @@ public class QueryRequestAccelerator implements Serializable {
          * @throws IllegalStateException Thrown if any of the required fields 
          * are not populated.
          */
+        @JsonIgnore
         private void validateQueryRequestAcceleratorObject(
                 QueryRequestAccelerator object) 
                     throws IllegalStateException {
@@ -217,13 +220,12 @@ public class QueryRequestAccelerator implements Serializable {
                             + "for the MD5 hash "
                             + "was null.");
                 }
-            
-                if ((object.getPath() == null) || 
-                        (object.getPath().isEmpty())) {
+                if (object.getProduct() == null) {
                     throw new IllegalStateException("Attempted to build "
-                            + "QueryRequestAccelerator object but the value "
-                            + "for FILE NAME was null or not supplied.");
+                            + "QueryRequestAccelerator object but the parent "
+                            + "Product object is null.");
                 }
+            
             }
             else {
                 throw new IllegalStateException("Construction of "

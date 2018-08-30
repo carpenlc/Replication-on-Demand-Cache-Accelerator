@@ -38,7 +38,7 @@ public class TestProduct {
                 .countryName(COUNTRY_NAME)
                 .edition(EDITION)
                 .fileDate(FILE_DATE)
-                .iso3char(ISO3CHR)
+                .iso3Char(ISO3CHR)
                 .loadDate(LOAD_DATE)
                 .mediaName(MEDIA_NAME)
                 .notes(NOTES)

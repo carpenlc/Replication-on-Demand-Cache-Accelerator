@@ -160,9 +160,9 @@ public class AcceleratorRecordFactory {
                         if (hash != null) {
                             record = new QueryRequestAccelerator
                                     .QueryRequestAcceleratorBuilder()
+                                    	.product(prod)
                                         .fileDate(FileUtils.getActualFileDate(p))
                                         .hash(hash)
-                                        .path(path)
                                         .size(FileUtils.getActualFileSize(p))
                                         .build();
                         }

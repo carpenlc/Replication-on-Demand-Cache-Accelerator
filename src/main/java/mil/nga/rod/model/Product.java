@@ -4,12 +4,17 @@ import java.io.Serializable;
 import java.sql.Date;
 import java.text.SimpleDateFormat;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+
 /**
  * Simple POJO containing the data associated with a single Product record
  * associated with the "Replication on Demand" project.
  * 
  * @author L. Craig Carpenter
  */
+@JsonDeserialize(builder = Product.ProductBuilder.class)
 public class Product implements Serializable {
 
     /**
@@ -37,7 +42,7 @@ public class Product implements Serializable {
     private final String countryName;
     private final long   edition;
     private final Date   fileDate;
-    private final String iso3char;
+    private final String iso3Char;
     private final Date   loadDate;
     private final String mediaName;
     private final String notes;
@@ -62,7 +67,7 @@ public class Product implements Serializable {
         this.countryName               = builder.countryName;
         this.edition                   = builder.edition;
         this.fileDate                  = builder.fileDate;
-        this.iso3char                  = builder.iso3char;
+        this.iso3Char                  = builder.iso3Char;
         this.loadDate                  = builder.loadDate;
         this.mediaName                 = builder.mediaName;
         this.notes                     = builder.notes;
@@ -123,10 +128,12 @@ public class Product implements Serializable {
     public Date getFileDate() {
         return fileDate;
     }
+    
     /**
      * Getter method for the file date.
      * @return The file date.
      */
+    @JsonIgnore
     public String getFileDateString() {
         String date = DEFAULT_DATE_STRING;
         if (fileDate != null) {
@@ -140,7 +147,7 @@ public class Product implements Serializable {
      * @return The ISO 3 character code.
      */
     public String getIso3Char() {
-        return iso3char;
+        return iso3Char;
     }
     
     /**
@@ -155,6 +162,7 @@ public class Product implements Serializable {
      * Getter method for the load date.
      * @return The load date.
      */
+    @JsonIgnore
     public String getLoadDateString() {
         String date = DEFAULT_DATE_STRING;
         if (fileDate != null) {
@@ -312,6 +320,7 @@ public class Product implements Serializable {
      * 
      * @author L. Craig Carpenter
      */
+    @JsonPOJOBuilder(withPrefix = "")
     public static class ProductBuilder {
         
         private String aorCode;
@@ -320,7 +329,7 @@ public class Product implements Serializable {
         private String countryName;
         private long   edition;
         private Date   fileDate;
-        private String iso3char;
+        private String iso3Char;
         private Date   loadDate;
         private String mediaName;
         private String notes;
@@ -414,9 +423,9 @@ public class Product implements Serializable {
          * Setter method for the ISO3CHR attribute.
          * @param value The ISO3CHR attribute.
          */
-        public ProductBuilder iso3char(String value) {
+        public ProductBuilder iso3Char(String value) {
             if (value != null) {
-                iso3char = value.trim();
+            	iso3Char = value.trim();
             }
             return this;
         }

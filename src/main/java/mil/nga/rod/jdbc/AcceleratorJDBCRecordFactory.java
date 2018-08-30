@@ -25,14 +25,14 @@ import mil.nga.rod.model.Product;
  * 
  * @author L. Craig Carpenter
  */
-public class RoDRecordFactory 
+public class AcceleratorJDBCRecordFactory 
         implements RoDRecordFactoryConstants, AutoCloseable {
 
     /**
      * Set up the Log4j system for use throughout the class
      */     
     static final Logger LOGGER = LoggerFactory.getLogger(
-            RoDRecordFactory.class);
+            AcceleratorJDBCRecordFactory.class);
     
     // JDBC Connection properties
     private String jdbcDriver       = null;
@@ -52,7 +52,7 @@ public class RoDRecordFactory
      * @throws PropertiesNotLoadedException
      * @throws ClassNotFoundException
      */
-    private RoDRecordFactory () 
+    private AcceleratorJDBCRecordFactory () 
             throws PropertyNotFoundException, 
                 PropertiesNotLoadedException, 
                 ClassNotFoundException {
@@ -357,7 +357,8 @@ public class RoDRecordFactory
         long              start    = System.currentTimeMillis();
         int               counter  = 0;
         String            sql      = "select distinct NSN, NRN from "
-                + TARGET_TABLE_NAME;
+                + TARGET_TABLE_NAME
+                + " order by FILE_DATE desc";
         
             
         try { 
@@ -368,8 +369,8 @@ public class RoDRecordFactory
                 // Load the map containing the unique products.
                 while (rs.next()) {
                     uniqueProducts.put(
-                    		rs.getString("NRN"), 
-                    		rs.getString("NSN"));
+                    		rs.getString("NSN"), 
+                    		rs.getString("NRN"));
                 }
                 
                 if (LOGGER.isDebugEnabled()) {
@@ -383,19 +384,19 @@ public class RoDRecordFactory
                 
                 // Now load the return product list.
                 if (uniqueProducts.size() > 0) {
-	                for (String nrn : uniqueProducts.keySet()) {
+	                for (String nsn : uniqueProducts.keySet()) {
 	                	List<Product> prods = getProducts(
-	                			nrn, 
-	                			uniqueProducts.get(nrn));
+	                			nsn, 
+	                			uniqueProducts.get(nsn));
 	                	if (prods.size() > 0) {
 	                		products.add(prods.get(0));
 	                	}
 	                	else {
 	                		LOGGER.warn("Unable to retrieve unique product "
-	                				+ "with key (i.e. NRN) => [ "
-	                				+ nrn
-	                				+ " ], and value (i.e. NSN) => [ "
-	                				+ uniqueProducts.get(nrn)
+	                				+ "with key (i.e. NSN) => [ "
+	                				+ nsn
+	                				+ " ], and value (i.e. NRN) => [ "
+	                				+ uniqueProducts.get(nsn)
 	                				+ " ].");
 	                	}
 	                }
@@ -514,7 +515,7 @@ public class RoDRecordFactory
      * @return The singleton instance of the ProductQueryResponseMarshaller .
      * class.
      */
-    public static RoDRecordFactory getInstance() 
+    public static AcceleratorJDBCRecordFactory getInstance() 
             throws PropertyNotFoundException, 
                 PropertiesNotLoadedException, 
                 ClassNotFoundException {
@@ -738,7 +739,7 @@ public class RoDRecordFactory
         /**
          * Reference to the Singleton instance of the RoDRecordFactory.
          */
-        private static RoDRecordFactory _instance = null;
+        private static AcceleratorJDBCRecordFactory _instance = null;
     
         /**
          * Accessor method for the singleton instance of the 
@@ -752,10 +753,10 @@ public class RoDRecordFactory
          * @throws ClassNotFoundException Thrown if the defined JDBC driver 
          * could not be found. 
          */
-        public static RoDRecordFactory getSingleton() 
+        public static AcceleratorJDBCRecordFactory getSingleton() 
                 throws PropertyNotFoundException, PropertiesNotLoadedException, ClassNotFoundException {
             if (_instance == null) {
-                _instance = new RoDRecordFactory();
+                _instance = new AcceleratorJDBCRecordFactory();
             }
             return _instance;
         }

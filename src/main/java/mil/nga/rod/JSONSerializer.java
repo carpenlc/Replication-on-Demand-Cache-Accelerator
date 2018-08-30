@@ -35,9 +35,14 @@ public class JSONSerializer {
      * DateFormat object used when serializing/deserializing dates.  This 
      * overrides the default behavior which depends on the type of date being
      * serialized/deserialized.
+     * 
+     * Updated: The information coming out of the database is a date, not a 
+     * date/time object.  The time component is not included.  As such JAX-B
+     * throws errors trying to deserialize the time part.  Updated to exclude
+     * time.
      */
     private static final DateFormat dateFormatter = 
-            new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+            new SimpleDateFormat("yyyy-MM-dd");
     
     static {
         dateFormatter.setTimeZone(TimeZone.getTimeZone("GMT"));

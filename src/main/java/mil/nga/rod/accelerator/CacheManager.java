@@ -95,14 +95,14 @@ public class CacheManager {
         List<Product> products = null;
         
         try (RoDRecordFactory factory = RoDRecordFactory.getInstance()) {
-            products = factory.getAllProducts();
+            products = factory.getUniqueProducts();
         }
         catch (PropertyNotFoundException pnfe) {
             LOGGER.error("PropertyNotFoundException raised "
                     + "while attempting to establish a connection to the "
                     + "back end data store.  Please ensure the required "
                     + "properties are available.  Property-specific error "
-                    + "message [ "
+                    + "message => [ "
                     + pnfe.getMessage()
                     + " ].");
         }
