@@ -59,10 +59,14 @@ public class AcceleratorJDBCRecordFactory
         
         PropertyLoader props = PropertyLoader.getInstance();
         
-        setJdbcDriver(props.getProperty(ACCELERATOR_JDBC_DRIVER_PROPERTY));
-        setConnectionString(props.getProperty(ACCELERATOR_JDBC_CONNECTION_STRING));
-        setUser(props.getProperty(ACCELERATOR_DB_USERNAME));
-        setPassword(props.getProperty(ACCELERATOR_DB_PASSWORD));
+        setJdbcDriver(props.getProperty(
+        		ACCELERATOR_JDBC_DRIVER_PROPERTY));
+        setConnectionString(props.getProperty(
+        		ACCELERATOR_JDBC_CONNECTION_STRING));
+        setUser(props.getProperty(
+        		ACCELERATOR_DB_USERNAME));
+        setPassword(props.getProperty(
+        		ACCELERATOR_DB_PASSWORD));
         
         Class.forName(getJdbcDriver());
     }
@@ -204,6 +208,49 @@ public class AcceleratorJDBCRecordFactory
 	            if (stmt != null) { stmt.close(); } 
 	        } catch (Exception e) {}
 	    }
+    }
+    
+    /**
+     * Because the cache is maintained on multiple nodes, we found that it 
+     * was possible (even likely) to end up with duplicate records in the data
+     * source.  This method was introduced to clean up those duplicates. 
+     */
+    public void removeDuplicates() {
+    	
+    	long   start = System.currentTimeMillis();
+    	String sql   = "DELETE FROM " + ACCELERATOR_TARGET_TABLE_NAME 
+    			+ " WHERE rowid not in (SELECT MIN(rowid) FROM " 
+    			+ ACCELERATOR_TARGET_TABLE_NAME
+    			+ " GROUP BY nrn, nsn)";
+        PreparedStatement stmt     = null;
+    	
+    	try {
+	    	if (getConnection() != null) {
+	    		stmt = getConnection().prepareStatement(sql);
+	    		stmt.executeUpdate();
+	    	}
+    	}
+    	catch (SQLException se) {
+	        LOGGER.error("An unexpected SQLException was raised while "
+	                + "attempting to insert a single [ "
+	                + ACCELERATOR_TARGET_TABLE_NAME
+	                + " ] record in the target data source.  Error "
+	                + "message [ "
+	                + se.getMessage() 
+	                + " ].");
+	    }
+	    finally {
+	        try { 
+	            if (stmt != null) { stmt.close(); } 
+	        } catch (Exception e) {}
+	    }
+    	if (LOGGER.isDebugEnabled()) {
+    		LOGGER.debug("Duplicates removed from table [ "
+    				+ ACCELERATOR_TARGET_TABLE_NAME 
+    				+ " ] in [ "
+    				+ (System.currentTimeMillis() - start)
+    				+ " ] ms.");
+    	}
     }
     
     /**

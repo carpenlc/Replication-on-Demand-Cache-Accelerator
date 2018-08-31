@@ -259,6 +259,7 @@ public class CacheManager {
                                 failedCounter++;
                             }
                     	}
+                        AcceleratorJDBCRecordFactory.getInstance().removeDuplicates();
                     }
                     catch (ClassNotFoundException cnfe) {
                     	failedCounter++;
