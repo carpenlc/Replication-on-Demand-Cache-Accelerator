@@ -5,9 +5,11 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import mil.nga.rod.JSONSerializer;
 import mil.nga.rod.accelerator.RedisCacheManager;
 import mil.nga.rod.jdbc.RoDRecordFactory;
 import mil.nga.rod.model.Product;
+import mil.nga.rod.model.QueryRequestAccelerator;
 import mil.nga.util.Options.Multiplicity;
 import mil.nga.util.Options.Separator;
 
@@ -32,7 +34,7 @@ public class GetKey {
      */
     public static final String USAGE_STRING = 
             "Usage : java mil.nga.util.GetKey -key=<key name> "
-            + "[ -getISORecord ] [ -h ] [ -help ]";
+            + "[ -deserialize ] [ -h ] [ -help ]";
     
     /**
      * Usage String presented when the command line arguments do not make 
@@ -40,7 +42,7 @@ public class GetKey {
      */
     public static final String HELP_STRING = 
             "Usage : java mil.nga.util.GetKey -key=<key name> "
-            + "[ -getISORecord ] [ -h ] [ -help ]";
+            + "[ -deserialize ] [ -h ] [ -help ]";
     
     /**
      * Default constructor requiring clients to supply the key to retrieve 
@@ -50,11 +52,15 @@ public class GetKey {
      * @param key
      * @param getISORecords If true 
      */
-    public GetKey(String key, boolean getISORecords) {
+    public GetKey(String key, boolean deserialize) {
+    	long start = System.currentTimeMillis();
         printKeyValue(key);
-        if (getISORecords) {
-            printISORecords(key);
+        if (deserialize) {
+        	deserialize(key);
         }
+        LOGGER.info("Key/value retrieved in [ "
+        		+ (System.currentTimeMillis() - start)
+        		+ " ] ms.");
     }
     
     /**
@@ -116,6 +122,26 @@ public class GetKey {
     }
     
     /**
+     * Deserialize the key into its associated object.
+     *  
+     * @param key The target key.
+     */
+    public void deserialize(String key) {
+        
+    	QueryRequestAccelerator record = 
+    			JSONSerializer.getInstance()
+    				.deserializeToQueryRequestAccelerator(key);
+    	
+    	if (record != null) {
+    		System.out.println(record.toString());
+    	}
+    	else {
+    		System.err.println("Error encountered while deserializing the "
+    				+ "requested key!");
+    	}
+    }
+    
+    /**
      * Print out the key/value pair.
      * 
      * @param key The key to query for.
@@ -145,13 +171,13 @@ public class GetKey {
      */
     public static void main(String[] args) {
         
-        String  key             = null;
-        boolean printISORecords = false;
+        String  key         = null;
+        boolean deserialize = false;
         
         // set up the command line options
         Options opt = new Options(args, 0);
         opt.getSet().addOption("key", Separator.EQUALS, Multiplicity.ONCE);
-        opt.getSet().addOption("getISORecord", Multiplicity.ZERO_OR_ONE);
+        opt.getSet().addOption("deserialize", Multiplicity.ZERO_OR_MORE);
         opt.getSet().addOption("h", Multiplicity.ZERO_OR_MORE);
         opt.getSet().addOption("help", Multiplicity.ZERO_OR_MORE);
         
@@ -187,12 +213,10 @@ public class GetKey {
             System.err.println(USAGE_STRING);
             System.exit(1);
         }
-        
-        if (opt.getSet().isSet("getISORecord")) {
-            printISORecords = true;
+        if (opt.getSet().isSet("deserialize")) {
+        	deserialize = true;
         }
-        
-        new GetKey(key, printISORecords);
+        new GetKey(key, deserialize);
      
     }
 }

@@ -5,10 +5,6 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,8 +13,12 @@ import mil.nga.PropertyLoader;
 import mil.nga.exceptions.PropertiesNotLoadedException;
 import mil.nga.exceptions.PropertyNotFoundException;
 import mil.nga.rod.model.Product;
+import mil.nga.rod.model.QueryRequestAccelerator;
 
 /**
+ * This is kind of messy because the accelerator record data is stored in a 
+ * different schema than the actual product data.  
+ * 
  * Non-EJB version of the code used to interface the back-end Oracle database 
  * that stores the information on the ISO files created for "Replication on 
  * Demand".
@@ -59,378 +59,187 @@ public class AcceleratorJDBCRecordFactory
         
         PropertyLoader props = PropertyLoader.getInstance();
         
-        setJdbcDriver(props.getProperty(JDBC_DRIVER_PROPERTY));
-        setConnectionString(props.getProperty(JDBC_CONNECTION_STRING));
-        setUser(props.getProperty(DB_USERNAME));
-        setPassword(props.getProperty(DB_PASSWORD));
+        setJdbcDriver(props.getProperty(ACCELERATOR_JDBC_DRIVER_PROPERTY));
+        setConnectionString(props.getProperty(ACCELERATOR_JDBC_CONNECTION_STRING));
+        setUser(props.getProperty(ACCELERATOR_DB_USERNAME));
+        setPassword(props.getProperty(ACCELERATOR_DB_PASSWORD));
         
         Class.forName(getJdbcDriver());
     }
     
+ 
     /**
-     * Get a list of all of the product records in the back-end data store.
+     * Retrieve the query request accelerator data from the backing data
+     * source.   
      * 
-     * @return A list of all Products in the back-end data store.
+     * @param prod The product that has been selected.
+     * @return The associated QueryRequestAccelerator or null if errors 
+     * were encountered retrieving the data.
      */
-    public List<Product> getAllProducts() {
+    public QueryRequestAccelerator getRecord(Product prod) {
+    	
+    	QueryRequestAccelerator record = null;
+        PreparedStatement       stmt   = null;
+        ResultSet               rs     = null;
+        long                    start  = System.currentTimeMillis();
+        String                  sql    = 
+        		"select NRN, NSN, FILE_DATE, HASH from "
+                + ACCELERATOR_TARGET_TABLE_NAME
+                + " where NRN=? and NSN=?";
         
-        List<Product>     products = new ArrayList<Product>();
-        PreparedStatement stmt     = null;
-        ResultSet         rs       = null;
-        long              start    = System.currentTimeMillis();
-        int               counter  = 0;
-        String            sql      = "select PROD_TYPE, MEDIA_NAME, NRN, "
-                + "NSN, EDITION, LOAD_DATE, FILE_DATE, SEC_CLASS, CLASS_DESC, "
-                + "SEC_REL, REL_DESC, UNIX_PATH, HYPERLINK_URL, ALL_NOTES, "
-                + "ISO3CHR, AOR_CODE, COUNTRY_NAME, PRODUCT_SIZE_BYTES from "
-                + TARGET_TABLE_NAME
-                + " order by FILE_DATE desc";
-        
-            
-        try { 
-            if (getConnection() != null) {
-
-                stmt = getConnection().prepareStatement(sql);
-                rs   = stmt.executeQuery();
-                
-                while (rs.next()) {
-                    try {
-                        Product product = new Product.ProductBuilder()
-                                .aorCode(rs.getString("AOR_CODE"))
-                                .classification(rs.getString("SEC_CLASS"))
-                                .classificationDescription(
-                                        rs.getString("CLASS_DESC"))
-                                .countryName(rs.getString("COUNTRY_NAME"))
-                                .edition(rs.getLong("EDITION"))
-                                .fileDate(rs.getDate("FILE_DATE"))
-                                .iso3Char(rs.getString("ISO3CHR"))
-                                .loadDate(rs.getDate("LOAD_DATE"))
-                                .mediaName(rs.getString("MEDIA_NAME"))
-                                .notes(rs.getString("ALL_NOTES"))
-                                .nsn(rs.getString("NSN"))
-                                .nrn(rs.getString("NRN"))
-                                .path(rs.getString("UNIX_PATH"))
-                                .productType(rs.getString("PROD_TYPE"))
-                                .releasability(rs.getString("SEC_REL"))
-                                .releasabilityDescription(
-                                        rs.getString("REL_DESC"))
-                                .size(rs.getLong("PRODUCT_SIZE_BYTES"))
-                                .url(rs.getString("HYPERLINK_URL"))
-                                .build();
-                        products.add(product);
-                    }
-                    catch (IllegalStateException ise) {
+    	if (prod != null) {
+    		if ((prod.getNRN() != null) && (!prod.getNRN().isEmpty())) {
+    			if ((prod.getNSN() != null) && (!prod.getNSN().isEmpty())) {
+    				
+    				try {
+	    				if (getConnection() != null) {
+	    					
+		                    stmt = getConnection().prepareStatement(sql);
+		                    stmt.setString(1, prod.getNRN());
+		                    stmt.setString(2, prod.getNSN());
+		                    rs   = stmt.executeQuery();
+		                    
+		                    while (rs.next()) {
+		                    	record = new QueryRequestAccelerator
+		                    			.QueryRequestAcceleratorBuilder()
+		                    			.product(prod)
+		                    			.fileDate(rs.getDate("FILE_DATE"))
+		                    			.size(rs.getLong("FILE_SIZE"))
+		                    			.hash(rs.getString("HASH"))
+		                    			.build();
+		                    }
+		                 
+		    				if (LOGGER.isDebugEnabled()) {
+		    	                LOGGER.debug("Accelerator record for file [ " 
+		    	                        + prod.getPath()
+		    	                        + " ] retrieved in [ "
+		    	                        + (System.currentTimeMillis() - start) 
+		    	                        + " ] ms.");
+		    	            }
+	    				}
+    				}
+    				catch (IllegalStateException ise) {
                         LOGGER.warn("Unexpected IllegalStateException raised "
                                 + "while loading [ "
-                                + TARGET_TABLE_NAME
+                                + ACCELERATOR_TARGET_TABLE_NAME
                                 + " ] records from "
                                 + "data store.  Error encountered [ "
                                 + ise.getMessage()
                                 + " ].");
-                        counter++;
-                    }
-                }
-            }
-            else {
-                LOGGER.warn("Unable to obtain a connection to the target "
-                        + "database.  An empty List will be returned to "
-                        + "the caller.");
-            }
-        }
-        catch (SQLException se) {
-            LOGGER.error("An unexpected SQLException was raised while "
-                    + "attempting to retrieve all [ "
-                    + TARGET_TABLE_NAME
-                    + " ] records from the target data source.  Error "
-                    + "message [ "
-                    + se.getMessage() 
-                    + " ].");
-        }
-        finally {
-            try { 
-                if (rs != null) { rs.close(); }
-            } catch (Exception e) {}
-            try { 
-                if (stmt != null) { stmt.close(); } 
-            } catch (Exception e) {}
-        }
-        
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("[ " 
-                    + products.size()
-                    + " ] records selected in [ "
-                    + (System.currentTimeMillis() - start) 
-                    + " ] ms.  Of the records selected [ "
-                    + counter
-                    + " ] contained data errors.");
-        }
-        return products;
+    				}
+    				catch (SQLException se) {
+    		            LOGGER.error("An unexpected SQLException was raised "
+    		            		+ "while attempting to retrieve accelerator "
+    		            		+ "record for NRN => [ "
+    		                    + prod.getNRN()
+    		                    + " ] and NSN => [ "
+    		                    + prod.getNSN()
+    		                    + " ].  Error message [ "
+    		                    + se.getMessage() 
+    		                    + " ].");
+    		        }
+    		        finally {
+    		            try { 
+    		                if (rs != null) { rs.close(); }
+    		            } catch (Exception e) {}
+    		            try { 
+    		                if (stmt != null) { stmt.close(); } 
+    		            } catch (Exception e) {}
+    		        }
+    			}
+    			else {
+        			LOGGER.warn("Product NSN is null or empty.  Unable to "
+        					+ "generate the cache accelerator record.  Return "
+        					+ "value will be null.");
+    			}
+    		}
+    		else {
+    			LOGGER.warn("Product NRN is null or empty.  Unable to "
+    					+ "generate the cache accelerator record.  Return "
+    					+ "value will be null.");
+    		}
+    	}
+    	else {
+    		LOGGER.warn("Input product is null.  Unable to generate the "
+    				+ "cache accelerator record.  Return value will be "
+    				+ "null.");
+    	}
+    	return record;
     }
     
     /**
-     * Get a list of products that match the input NRN/NSN.  
-     * 
-     * @param nrn The NRN to select.
-     * @param nsn The NSN to select.
-     * @return A list of products matching the input NRN/NSN.
+     * Insert the data associated with the query request accelerator record 
+     * into the backing data store.   
+     * @param record The record to insert.
      */
-    public List<Product> getProducts(String nrn, String nsn) {
-        
-        List<Product>     products = new ArrayList<Product>();
-        PreparedStatement stmt     = null;
-        ResultSet         rs       = null;
-        long              start    = System.currentTimeMillis();
-        int               counter  = 0;
-        String            sql      = "select PROD_TYPE, MEDIA_NAME, NRN, "
-                + "NSN, EDITION, LOAD_DATE, FILE_DATE, SEC_CLASS, CLASS_DESC, "
-                + "SEC_REL, REL_DESC, UNIX_PATH, HYPERLINK_URL, ALL_NOTES, "
-                + "ISO3CHR, AOR_CODE, COUNTRY_NAME, PRODUCT_SIZE_BYTES from "
-                + TARGET_TABLE_NAME
-                + " where NRN=? and NSN=? order by FILE_DATE desc";
-        
-            
-        try { 
-            if ((nrn != null) && (!nrn.isEmpty())) {
-                if ((nsn != null) && (!nsn.isEmpty())) {
-                    if (getConnection() != null) {
-        
-                        stmt = getConnection().prepareStatement(sql);
-                        stmt.setString(1, nrn);
-                        stmt.setString(2, nsn);
-                        rs   = stmt.executeQuery();
-                        
-                        while (rs.next()) {
-                            try {
-                                Product product = new Product.ProductBuilder()
-                                        .aorCode(rs.getString("AOR_CODE"))
-                                        .classification(rs.getString("SEC_CLASS"))
-                                        .classificationDescription(
-                                                rs.getString("CLASS_DESC"))
-                                        .countryName(rs.getString("COUNTRY_NAME"))
-                                        .edition(rs.getLong("EDITION"))
-                                        .fileDate(rs.getDate("FILE_DATE"))
-                                        .iso3Char(rs.getString("ISO3CHR"))
-                                        .loadDate(rs.getDate("LOAD_DATE"))
-                                        .mediaName(rs.getString("MEDIA_NAME"))
-                                        .notes(rs.getString("ALL_NOTES"))
-                                        .nsn(rs.getString("NSN"))
-                                        .nrn(rs.getString("NRN"))
-                                        .path(rs.getString("UNIX_PATH"))
-                                        .productType(rs.getString("PROD_TYPE"))
-                                        .releasability(rs.getString("SEC_REL"))
-                                        .releasabilityDescription(
-                                                rs.getString("REL_DESC"))
-                                        .size(rs.getLong("PRODUCT_SIZE_BYTES"))
-                                        .url(rs.getString("HYPERLINK_URL"))
-                                        .build();
-                                products.add(product);
-                            }
-                            catch (IllegalStateException ise) {
-                                LOGGER.warn("Unexpected IllegalStateException raised "
-                                        + "while loading [ "
-                                        + TARGET_TABLE_NAME
-                                        + " ] records from "
-                                        + "data store.  Error encountered [ "
-                                        + ise.getMessage()
-                                        + " ].");
-                                counter++;
-                            }
-                        }
-                    }
-                    else {
-                        LOGGER.warn("Unable to obtain a connection to the target "
-                                + "database.  An empty List will be returned to "
-                                + "the caller.");
-                    }
-                }
-                else {
-                    LOGGER.warn("Input NSN is null.  Query wasn't executed.  "
-                            + "Return array is empty.");
-                }
-            }
-            else {
-                LOGGER.warn("Input NRN is null.  Query wasn't executed.  "
-                        + "Return array is empty.");     
-            }
-        }
-        catch (SQLException se) {
-            LOGGER.error("An unexpected SQLException was raised while "
-                    + "attempting to retrieve all [ "
-                    + TARGET_TABLE_NAME
-                    + " ] records from the target data source.  Error "
-                    + "message [ "
-                    + se.getMessage() 
-                    + " ].");
-        }
-        finally {
-            try { 
-                if (rs != null) { rs.close(); }
-            } catch (Exception e) {}
-            try { 
-                if (stmt != null) { stmt.close(); } 
-            } catch (Exception e) {}
-        }
-        
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("[ " 
-                    + products.size()
-                    + " ] records selected in [ "
-                    + (System.currentTimeMillis() - start) 
-                    + " ] ms.  Of the records selected [ "
-                    + counter
-                    + " ] contained data errors.");
-        }
-        return products;
-    }
-    
-    /**
-     * Get a list of AOR codes from the back end data source.
-     * 
-     * @return The list of AOR codes.
-     */
-    public List<String> getAORCodes() {
-        
-        List<String>      aors   = new ArrayList<String>();
-        PreparedStatement stmt   = null;
-        ResultSet         rs     = null;
-        long              start  = System.currentTimeMillis();
-        String            sql    = "select distinct(AOR_CODE) from "
-                + TARGET_TABLE_NAME;
-        
-        try {
-            if (getConnection() != null) {
-                stmt = getConnection().prepareStatement(sql);
-                rs   = stmt.executeQuery();
-                while (rs.next()) {
-                    aors.add(rs.getString("AOR_CODE"));
-                }
-            }
-            else {
-                LOGGER.warn("Unable to obtain a connection to the target "
-                        + "database.  An empty List will be returned to "
-                        + "the caller.");
-            }
-        }
-        catch (SQLException se) {
-            LOGGER.error("An unexpected SQLException was raised while "
-                    + "attempting to retrieve a list of AOR Codes from "
-                    + "the target data source.  Error message [ "
-                    + se.getMessage() 
-                    + " ].");
-        }
-        finally {
-            try { 
-                if (rs != null) { rs.close(); } 
-            } catch (Exception e) {}
-            try { 
-                if (stmt != null) { stmt.close(); } 
-            } catch (Exception e) {}
-        }
-        
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("[ "
-                    + aors.size() 
-                    + " ] AOR_CODES selected in [ "
-                    + (System.currentTimeMillis() - start) 
-                    + " ] ms.");
-        }
-        return aors;
-    }
-    
-    
-    /**
-     * The database team decided to store multiple records associated with 
-     * each unique NSN/NRN combination.  The intent was to allow easier 
-     * searching based on country and/or AOR.  The issue was the 15k or 
-     * so unique records exploded into the millions.  This method was added
-     * to get only the unique NSN/NRN combinations.
-     * 
-     * @return A list of products with a unique NSN/NRN combination.
-     */
-    public List<Product> getUniqueProducts() {
-        
-    	List<Product>       products       = new ArrayList<Product>();
-    	Map<String, String> uniqueProducts = new HashMap<String, String>();
+    public void insert (QueryRequestAccelerator record) {
     	
-        PreparedStatement stmt     = null;
-        ResultSet         rs       = null;
-        long              start    = System.currentTimeMillis();
-        int               counter  = 0;
-        String            sql      = "select distinct NSN, NRN from "
-                + TARGET_TABLE_NAME
-                + " order by FILE_DATE desc";
-        
-            
-        try { 
-            if (getConnection() != null) {
-            	stmt = getConnection().prepareStatement(sql);
-                rs   = stmt.executeQuery();
-                
-                // Load the map containing the unique products.
-                while (rs.next()) {
-                    uniqueProducts.put(
-                    		rs.getString("NSN"), 
-                    		rs.getString("NRN"));
-                }
-                
-                if (LOGGER.isDebugEnabled()) {
-                	LOGGER.debug("Loaded intermediate product map "
-                			+ "containing [ "
-                			+ uniqueProducts.size()
-                			+ " ] products in [ "
-                			+ (System.currentTimeMillis() - start)
-                			+ " ] ms.");
-                }
-                
-                // Now load the return product list.
-                if (uniqueProducts.size() > 0) {
-	                for (String nsn : uniqueProducts.keySet()) {
-	                	List<Product> prods = getProducts(
-	                			nsn, 
-	                			uniqueProducts.get(nsn));
-	                	if (prods.size() > 0) {
-	                		products.add(prods.get(0));
-	                	}
-	                	else {
-	                		LOGGER.warn("Unable to retrieve unique product "
-	                				+ "with key (i.e. NSN) => [ "
-	                				+ nsn
-	                				+ " ], and value (i.e. NRN) => [ "
-	                				+ uniqueProducts.get(nsn)
-	                				+ " ].");
-	                	}
-	                }
-	                if (LOGGER.isDebugEnabled()) {
-	                	LOGGER.debug("Loaded [ "
-	                			+ products.size()
-	                			+ " ] unique products in [ "
-	                			+ (System.currentTimeMillis() - start)
-	                			+ " ] ms.");
-	                }
-                }
-                else {
-                	LOGGER.warn("Found 0 unique products.  Return product "
-                			+ "list will be empty.");
-                }
-                
-            }
-        }
-        catch (SQLException se) {
-            LOGGER.error("An unexpected SQLException was raised while "
-                    + "attempting to retrieve the list of unique products "
-                    + "from the target data source.  Error message => [ "
-                    + se.getMessage() 
-                    + " ].");
-        }
-        finally {
-            try { 
-                if (rs != null) { rs.close(); } 
-            } catch (Exception e) {}
-            try { 
-                if (stmt != null) { stmt.close(); } 
-            } catch (Exception e) {}
-        }
-        return products;
+    	String sql = "INSERT INTO " + ACCELERATOR_TARGET_TABLE_NAME 
+    			+ "(NRN, NSN, FILE_DATE, HASH) VALUES ?, ?, ?, ?;";
+    	PreparedStatement stmt     = null;
+    	
+    	try {
+	    	if (getConnection() != null) {
+	    		stmt = getConnection().prepareStatement(sql);
+	    		stmt.setString(1, record.getProduct().getNRN());
+	    		stmt.setString(2, record.getProduct().getNSN());
+	    		stmt.setDate(  3, new java.sql.Date(record.getFileDate().getTime()));
+	    		stmt.setString(4, record.getHash());
+	    		stmt.executeUpdate();
+	    	}
+    	}
+    	catch (SQLException se) {
+	        LOGGER.error("An unexpected SQLException was raised while "
+	                + "attempting to insert a single [ "
+	                + ACCELERATOR_TARGET_TABLE_NAME
+	                + " ] record in the target data source.  Error "
+	                + "message [ "
+	                + se.getMessage() 
+	                + " ].");
+	    }
+	    finally {
+	        try { 
+	            if (stmt != null) { stmt.close(); } 
+	        } catch (Exception e) {}
+	    }
+    }
+    
+    /**
+     * IUpdate an existing query request accelerator record in the backing 
+     * data store.   
+     * @param record The record to insert.
+     */
+    public void update (QueryRequestAccelerator record) {
+    	
+    	String sql = "UPDATE " 
+    			+ ACCELERATOR_TARGET_TABLE_NAME 
+    			+ "SET FILE_DATE=?, HASH=? WHERE NRN=? AND NSN=?";
+    	PreparedStatement stmt     = null;
+    	
+    	try {
+	    	if (getConnection() != null) {
+	    		stmt = getConnection().prepareStatement(sql);
+	    		stmt.setDate(  1, new java.sql.Date(record.getFileDate().getTime()));
+	    		stmt.setString(2, record.getHash());
+	    		stmt.setString(3, record.getProduct().getNRN());
+	    		stmt.setString(4, record.getProduct().getNSN());
+	    		stmt.executeUpdate();
+	    	}
+    	}
+    	catch (SQLException se) {
+	        LOGGER.error("An unexpected SQLException was raised while "
+	                + "attempting to update a single [ "
+	                + ACCELERATOR_TARGET_TABLE_NAME
+	                + " ] record in the target data source.  Error "
+	                + "message [ "
+	                + se.getMessage() 
+	                + " ].");
+	    }
+	    finally {
+	        try { 
+	            if (stmt != null) { stmt.close(); } 
+	        } catch (Exception e) {}
+	    }
     }
     
     /**
@@ -452,62 +261,6 @@ public class AcceleratorJDBCRecordFactory
         return rodConnection;
     }
     
-    
-    /**
-     * Get a list of countries from the back end data source.
-     * 
-     * @return The list of countries codes.
-     */
-    public List<String> getCountries() {
-
-        List<String>      countries = new ArrayList<String>();
-        PreparedStatement stmt      = null;
-        ResultSet         rs        = null;
-        long              start     = System.currentTimeMillis();
-        String            sql       = "select distinct(COUNTRY_NAME) from "
-                + TARGET_TABLE_NAME
-                + " order by COUNTRY_NAME";
-            
-        try {
-            if (getConnection() != null) {
-                stmt = getConnection().prepareStatement(sql);
-                rs   = stmt.executeQuery();
-                while (rs.next()) {
-                    countries.add(rs.getString("COUNTRY_NAME"));
-                }
-            }
-            else {
-                LOGGER.warn("Unable to obtain a connection to the target "
-                        + "database.  An empty List will be returned to "
-                        + "the caller.");
-            }
-        }
-        catch (SQLException se) {
-            LOGGER.error("An unexpected SQLException was raised while "
-                    + "attempting to retrieve a list of COUNTRY_NAME "
-                    + "from the target data source.  Error message [ "
-                    + se.getMessage() 
-                    + " ].");
-        }
-        finally {
-            try { 
-                if (rs != null) { rs.close(); } 
-            } catch (Exception e) {}
-            try { 
-                if (stmt != null) { stmt.close(); } 
-            } catch (Exception e) {}
-        }
-        
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("[ "
-                    + countries.size() 
-                    + " ] COUNTRY_NAME selected in [ "
-                    + (System.currentTimeMillis() - start) 
-                    + " ] ms.");
-        }
-        return countries;
-    }
-    
     /**
      * Accessor method for the singleton instance of the 
      * ProductQueryResponseMarshaller class.
@@ -521,61 +274,6 @@ public class AcceleratorJDBCRecordFactory
                 ClassNotFoundException {
         return RoDRecordFactoryHolder.getSingleton();
     } 
-    
-    /**
-     * Get a list of product types from the back end data source.
-     * 
-     * @return The list of unique product types in the back-end data store.
-     */
-    public List<String> getProductTypes() {
-        
-        List<String>      products = new ArrayList<String>();
-        PreparedStatement stmt     = null;
-        ResultSet         rs       = null;
-        long              start    = System.currentTimeMillis();
-        String            sql      = "select distinct(PROD_TYPE) from "
-                + TARGET_TABLE_NAME;
-        
-        try {
-            if (getConnection() != null) {
-                stmt = getConnection().prepareStatement(sql);
-                rs   = stmt.executeQuery();
-                while (rs.next()) {
-                    products.add(rs.getString("PROD_TYPE"));
-                }
-            }
-            else {
-                LOGGER.warn("Unable to obtain a connection to the target "
-                        + "database.  An empty List will be returned to "
-                        + "the caller.");
-            }
-        }
-        catch (SQLException se) {
-            LOGGER.error("An unexpected SQLException was raised while "
-                    + "attempting to retrieve a list of PROD_TYPE records "
-                    + "from the target data source.  Error message [ "
-                    + se.getMessage() 
-                    + " ].");
-        }
-        finally {
-            try { 
-                if (rs != null) { rs.close(); } 
-            } catch (Exception e) {}
-            try { 
-                if (stmt != null) { stmt.close(); } 
-            } catch (Exception e) {}
-        }
-        
-        
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("[ "
-                    + products.size() 
-                    + " ] PROD_TYPE records selected in [ "
-                    + (System.currentTimeMillis() - start) 
-                    + " ] ms.");
-        }
-        return products;
-    }
     
     /**
      * Close the database connection if open.
@@ -636,7 +334,7 @@ public class AcceleratorJDBCRecordFactory
         
         if ((value == null) || (value.isEmpty())) {
             throw new PropertyNotFoundException("Required property [ "
-                    + RoDRecordFactoryConstants.JDBC_CONNECTION_STRING
+                    + RoDRecordFactoryConstants.ACCELERATOR_JDBC_CONNECTION_STRING
                     + " ] was not supplied.");
         }
         else {
@@ -657,7 +355,7 @@ public class AcceleratorJDBCRecordFactory
         
         if ((value == null) || (value.isEmpty())) {
             throw new PropertyNotFoundException("Required property [ "
-                    + RoDRecordFactoryConstants.JDBC_DRIVER_PROPERTY
+                    + RoDRecordFactoryConstants.ACCELERATOR_JDBC_DRIVER_PROPERTY
                     + " ] was not supplied.");
         }
         else {
@@ -679,7 +377,7 @@ public class AcceleratorJDBCRecordFactory
         
         if ((value == null) || (value.isEmpty())) {
             throw new PropertyNotFoundException("Required property [ "
-                    + RoDRecordFactoryConstants.DB_PASSWORD
+                    + RoDRecordFactoryConstants.ACCELERATOR_DB_PASSWORD
                     + " ] was not supplied.");
         }
         else {
@@ -700,7 +398,7 @@ public class AcceleratorJDBCRecordFactory
         
         if ((value == null) || (value.isEmpty())) {
             throw new PropertyNotFoundException("Required property [ "
-                    + RoDRecordFactoryConstants.DB_USERNAME
+                    + RoDRecordFactoryConstants.ACCELERATOR_DB_USERNAME
                     + " ] was not supplied.");
         }
         else {
@@ -722,7 +420,7 @@ public class AcceleratorJDBCRecordFactory
     	sb.append(" ], Password => [ <hidden> ], JDBC Driver => [ ");
     	sb.append(getJdbcDriver());
     	sb.append(" ], Target Table Name => [ ");
-    	sb.append(TARGET_TABLE_NAME);
+    	sb.append(ACCELERATOR_TARGET_TABLE_NAME);
     	sb.append(" ].");
     	return sb.toString();
     }
@@ -754,7 +452,9 @@ public class AcceleratorJDBCRecordFactory
          * could not be found. 
          */
         public static AcceleratorJDBCRecordFactory getSingleton() 
-                throws PropertyNotFoundException, PropertiesNotLoadedException, ClassNotFoundException {
+                throws PropertyNotFoundException, 
+                	PropertiesNotLoadedException, 
+                	ClassNotFoundException {
             if (_instance == null) {
                 _instance = new AcceleratorJDBCRecordFactory();
             }

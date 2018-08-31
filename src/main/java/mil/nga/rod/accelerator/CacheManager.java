@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import mil.nga.exceptions.PropertiesNotLoadedException;
 import mil.nga.exceptions.PropertyNotFoundException;
 import mil.nga.rod.JSONSerializer;
+import mil.nga.rod.jdbc.AcceleratorJDBCRecordFactory;
 import mil.nga.rod.jdbc.RoDRecordFactory;
 import mil.nga.rod.model.Product;
 import mil.nga.rod.model.QueryRequestAccelerator;
@@ -76,6 +77,39 @@ public class CacheManager {
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("File [ "
                             + record.getPath()
+                            + " ] has changed.  Cache record will be updated.");
+                }
+                
+                needsUpdate = true;
+            }
+        }
+        return needsUpdate;
+    }
+    
+    /**
+     * See if the on-disk file changed in size since the last time the cache 
+     * was updated.  
+     * 
+     * @param value The existing data.
+     * @return True if the on-disk data has changed since the last update.
+     * @throws IOException Thrown if there are issues accessing the on-disk 
+     * file.
+     */
+    public boolean isUpdateRequired(QueryRequestAccelerator product) 
+    		throws IOException {
+    	
+        boolean needsUpdate = false;
+        
+        if (product != null) {
+            
+            long size = FileUtils.getActualFileSize(
+            		Paths.get(product.getPath()));
+            
+            if (size != product.getSize()) {
+                
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("File [ "
+                            + product.getPath()
                             + " ] has changed.  Cache record will be updated.");
                 }
                 
@@ -158,22 +192,77 @@ public class CacheManager {
                     totalCounter++;
                     try {
                         
-                        String key   = AcceleratorRecordFactory.getInstance().getKey(record);
-                        String value = RedisCacheManager.getInstance().get(key);
+                        String key = AcceleratorRecordFactory.getInstance().getKey(record);
+                        QueryRequestAccelerator value = 
+                        		JSONSerializer
+                        			.getInstance()
+                        			.deserializeToQueryRequestAccelerator(
+                        					RedisCacheManager.getInstance().get(key));
                         
-                        if ((value == null) || (isUpdateRequired(value))) {
-                            
-                            value = AcceleratorRecordFactory.getInstance().getValue(
-                                    AcceleratorRecordFactory.getInstance().buildRecord(record));
-                            
-                            if (value != null) {
-                                RedisCacheManager.getInstance().put(key, value);
-                                successCounter++;
-                            }
-                            else {
-                                failedCounter++;
-                            }
+                        //Not in cache? 
+                        if (value == null) {
+                        	// Check the database
+                        	value = AcceleratorJDBCRecordFactory.getInstance().getRecord(record);
+                        	// Not in database?
+                        	if (value == null) {
+                        		// Generate the record.
+                        		value = AcceleratorRecordFactory
+                        				.getInstance()
+                        				.buildRecord(record);
+                        		if (value != null) {
+	                        		RedisCacheManager.getInstance().put(
+	                        				key, 
+	                        				AcceleratorRecordFactory.getInstance().getValue(value));
+	                        		AcceleratorJDBCRecordFactory.getInstance().insert(value);
+	                        		successCounter++;
+                        		}
+                        		else {
+                                    failedCounter++;
+                                }
+                        	}
+                        	else if (isUpdateRequired(value)) {
+                        		value = AcceleratorRecordFactory
+                        				.getInstance()
+                        				.buildRecord(record);
+                        		if (value != null) {
+	                        		RedisCacheManager.getInstance().put(
+	                        				key, 
+	                        				AcceleratorRecordFactory.getInstance().getValue(value));
+	                        		AcceleratorJDBCRecordFactory.getInstance().update(value);
+	                        		successCounter++;
+                        		}
+                        		else {
+                                    failedCounter++;
+                                }
+                        	}
                         }
+                    }
+                    catch (ClassNotFoundException cnfe) {
+                    	failedCounter++;
+                    	LOGGER.error("Configuration error encountered.  "
+                    			+ "Database unavailable.  Unexpected "
+                    			+ "ClassNotFoundException raised.  "
+                    			+ "Error message => [ "
+                    			+ cnfe.getMessage()
+                    			+ " ].");
+                    }
+                    catch (PropertiesNotLoadedException pnle) {
+                    	failedCounter++;
+                    	LOGGER.error("Configuration error encountered.  "
+                    			+ "Database unavailable.  Unexpected "
+                    			+ "PropertiesNotLoadedException raised.  "
+                    			+ "Error message => [ "
+                    			+ pnle.getMessage()
+                    			+ " ].");
+                    }
+                    catch (PropertyNotFoundException pnfe) {
+                    	failedCounter++;
+                    	LOGGER.error("Configuration error encountered.  "
+                    			+ "Database unavailable.  Unexpected "
+                    			+ "PropertyNotFoundException raised.  "
+                    			+ "Error message => [ "
+                    			+ pnfe.getMessage()
+                    			+ " ].");
                     }
                     catch (IOException ioe) {
                         failedCounter++;
@@ -205,7 +294,6 @@ public class CacheManager {
                 + failedCounter
                 + " ] records failed to update.");
     }
-    
     
     /**
      * Main method invoked to start the Replication-on-Demand cache management

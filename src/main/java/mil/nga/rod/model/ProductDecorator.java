@@ -13,6 +13,9 @@ public class ProductDecorator {
 	 */
 	protected Product product;
 	
+	/**
+	 * Default constructor required by JAX-B.
+	 */
 	public ProductDecorator() {}
 	
 	/**

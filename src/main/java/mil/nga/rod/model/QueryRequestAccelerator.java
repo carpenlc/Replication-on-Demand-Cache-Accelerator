@@ -24,11 +24,11 @@ public class QueryRequestAccelerator
     /* Sample command for creating the backing data table (Oracle):
      
     create table ROD_QUERY_REQUEST_ACCELERATOR (
+        NRN            VARCHAR(20),
+        NSN            VARCHAR(20),
         FILE_DATE      TIMESTAMP,
         FILE_SIZE      NUMBER,      
-        UNIX_PATH      VARCHAR2(200),
         HASH           VARCHAR2(200),
-        CONSTRAINT UNIX_PATH_PK PRIMARY KEY (UNIX_PATH)
     );
 
     The primary key is actually extracted from the parent class (i.e. Product).
@@ -225,7 +225,6 @@ public class QueryRequestAccelerator
                             + "QueryRequestAccelerator object but the parent "
                             + "Product object is null.");
                 }
-            
             }
             else {
                 throw new IllegalStateException("Construction of "
