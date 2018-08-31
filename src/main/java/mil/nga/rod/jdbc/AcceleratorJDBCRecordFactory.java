@@ -175,7 +175,7 @@ public class AcceleratorJDBCRecordFactory
     public void insert (QueryRequestAccelerator record) {
     	
     	String sql = "INSERT INTO " + ACCELERATOR_TARGET_TABLE_NAME 
-    			+ "(NRN, NSN, FILE_DATE, HASH) VALUES ?, ?, ?, ?;";
+    			+ "(NRN, NSN, FILE_DATE, FILE_SIZE, HASH) VALUES ?, ?, ?, ?, ?;";
     	PreparedStatement stmt     = null;
     	
     	try {
@@ -184,7 +184,8 @@ public class AcceleratorJDBCRecordFactory
 	    		stmt.setString(1, record.getProduct().getNRN());
 	    		stmt.setString(2, record.getProduct().getNSN());
 	    		stmt.setDate(  3, new java.sql.Date(record.getFileDate().getTime()));
-	    		stmt.setString(4, record.getHash());
+	    		stmt.setLong(  4, record.getSize());
+	    		stmt.setString(5, record.getHash());
 	    		stmt.executeUpdate();
 	    	}
     	}
@@ -213,16 +214,17 @@ public class AcceleratorJDBCRecordFactory
     	
     	String sql = "UPDATE " 
     			+ ACCELERATOR_TARGET_TABLE_NAME 
-    			+ "SET FILE_DATE=?, HASH=? WHERE NRN=? AND NSN=?";
+    			+ "SET FILE_DATE=?, FILE_SIZE=?, HASH=? WHERE NRN=? AND NSN=?";
     	PreparedStatement stmt     = null;
     	
     	try {
 	    	if (getConnection() != null) {
 	    		stmt = getConnection().prepareStatement(sql);
 	    		stmt.setDate(  1, new java.sql.Date(record.getFileDate().getTime()));
-	    		stmt.setString(2, record.getHash());
-	    		stmt.setString(3, record.getProduct().getNRN());
-	    		stmt.setString(4, record.getProduct().getNSN());
+	    		stmt.setLong(  2, record.getSize());
+	    		stmt.setString(3, record.getHash());
+	    		stmt.setString(4, record.getProduct().getNRN());
+	    		stmt.setString(5, record.getProduct().getNSN());
 	    		stmt.executeUpdate();
 	    	}
     	}
