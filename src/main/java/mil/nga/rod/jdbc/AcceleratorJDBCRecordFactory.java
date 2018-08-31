@@ -175,7 +175,7 @@ public class AcceleratorJDBCRecordFactory
     public void insert (QueryRequestAccelerator record) {
     	
     	String sql = "INSERT INTO " + ACCELERATOR_TARGET_TABLE_NAME 
-    			+ " (NRN, NSN, FILE_DATE, FILE_SIZE, HASH) VALUES ?, ?, ?, ?, ?;";
+    			+ " (NRN, NSN, FILE_DATE, FILE_SIZE, HASH) VALUES (?, ?, ?, ?, ?);";
     	PreparedStatement stmt     = null;
     	
     	try {

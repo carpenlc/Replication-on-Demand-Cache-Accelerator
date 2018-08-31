@@ -54,7 +54,7 @@ public class GetKey {
      */
     public GetKey(String key, boolean deserialize) {
     	long start = System.currentTimeMillis();
-        printKeyValue(key);
+        printKeyValue(key, deserialize);
         if (deserialize) {
         	deserialize(key);
         }
@@ -128,16 +128,25 @@ public class GetKey {
      */
     public void deserialize(String key) {
         
-    	QueryRequestAccelerator record = 
-    			JSONSerializer.getInstance()
-    				.deserializeToQueryRequestAccelerator(key);
-    	
-    	if (record != null) {
-    		System.out.println(record.toString());
-    	}
-    	else {
-    		System.err.println("Error encountered while deserializing the "
-    				+ "requested key!");
+    	try (RedisCacheManager manager = RedisCacheManager.getInstance()) { 
+            String value = manager.get(key);
+            if ((value == null) || (value.isEmpty())) {
+                LOGGER.warn("Input key [ "
+                        + key 
+                        + " ] does not exist in the cache.");
+            }
+            else {
+            	QueryRequestAccelerator record = 
+            			JSONSerializer.getInstance()
+            				.deserializeToQueryRequestAccelerator(key);
+            	if (record != null) {
+            		System.out.println(record.toString());
+            	}
+            	else {
+            		System.err.println("Error encountered while deserializing the "
+            				+ "requested key!");
+            	}
+            }
     	}
     }
     
@@ -146,7 +155,7 @@ public class GetKey {
      * 
      * @param key The key to query for.
      */
-    public void printKeyValue(String key) {
+    public void printKeyValue(String key, boolean deserialize) {
         try (RedisCacheManager manager = RedisCacheManager.getInstance()) { 
             String value = manager.get(key);
             if ((value == null) || (value.isEmpty())) {
@@ -161,6 +170,7 @@ public class GetKey {
                         + value
                         + " ].");
             }
+            
         }
     }
     
