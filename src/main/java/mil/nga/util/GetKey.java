@@ -55,9 +55,6 @@ public class GetKey {
     public GetKey(String key, boolean deserialize) {
     	long start = System.currentTimeMillis();
         printKeyValue(key, deserialize);
-        if (deserialize) {
-        	deserialize(key);
-        }
         LOGGER.info("Key/value retrieved in [ "
         		+ (System.currentTimeMillis() - start)
         		+ " ] ms.");
@@ -122,35 +119,6 @@ public class GetKey {
     }
     
     /**
-     * Deserialize the key into its associated object.
-     *  
-     * @param key The target key.
-     */
-    public void deserialize(String key) {
-        
-    	try (RedisCacheManager manager = RedisCacheManager.getInstance()) { 
-            String value = manager.get(key);
-            if ((value == null) || (value.isEmpty())) {
-                LOGGER.warn("Input key [ "
-                        + key 
-                        + " ] does not exist in the cache.");
-            }
-            else {
-            	QueryRequestAccelerator record = 
-            			JSONSerializer.getInstance()
-            				.deserializeToQueryRequestAccelerator(key);
-            	if (record != null) {
-            		System.out.println(record.toString());
-            	}
-            	else {
-            		System.err.println("Error encountered while deserializing the "
-            				+ "requested key!");
-            	}
-            }
-    	}
-    }
-    
-    /**
      * Print out the key/value pair.
      * 
      * @param key The key to query for.
@@ -169,6 +137,18 @@ public class GetKey {
                         + " ], value => [ "
                         + value
                         + " ].");
+                if (deserialize) {
+                	QueryRequestAccelerator record = 
+                			JSONSerializer.getInstance()
+                				.deserializeToQueryRequestAccelerator(key);
+                	if (record != null) {
+                		System.out.println(record.toString());
+                	}
+                	else {
+                		System.err.println("Error encountered while deserializing the "
+                				+ "requested key!");
+                	}
+                }
             }
             
         }
