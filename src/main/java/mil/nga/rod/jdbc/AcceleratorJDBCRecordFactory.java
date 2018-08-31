@@ -83,7 +83,7 @@ public class AcceleratorJDBCRecordFactory
         ResultSet               rs     = null;
         long                    start  = System.currentTimeMillis();
         String                  sql    = 
-        		"select NRN, NSN, FILE_DATE, HASH from "
+        		"select NRN, NSN, FILE_DATE, FILE_SIZE, HASH from "
                 + ACCELERATOR_TARGET_TABLE_NAME
                 + " where NRN=? and NSN=?";
         

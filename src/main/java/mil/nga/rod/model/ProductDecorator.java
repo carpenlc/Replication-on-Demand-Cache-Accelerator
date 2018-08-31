@@ -34,4 +34,12 @@ public class ProductDecorator {
 		return product;
 	}
 	
+	public String toString() {
+		if (getProduct() != null) {
+			return getProduct().toString();
+		}
+		else {
+			return "[ parent product not available ].";
+		}
+	}
 }

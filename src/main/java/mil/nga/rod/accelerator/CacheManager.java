@@ -220,6 +220,7 @@ public class CacheManager {
                                     failedCounter++;
                                 }
                         	}
+                        	// It's in the database.  Is an update necessary?
                         	else if (isUpdateRequired(value)) {
                         		value = AcceleratorRecordFactory
                         				.getInstance()
@@ -235,7 +236,29 @@ public class CacheManager {
                                     failedCounter++;
                                 }
                         	}
+                        	else {
+                        		// Ensure it's put back in the cache.
+                        		RedisCacheManager.getInstance().put(
+                        				key, 
+                        				AcceleratorRecordFactory.getInstance().getValue(value));
+                        	}
                         }
+                        // It's in the cache.  Is an update necessary?
+                        else if (isUpdateRequired(value)) {
+                    		value = AcceleratorRecordFactory
+                    				.getInstance()
+                    				.buildRecord(record);
+                    		if (value != null) {
+                        		RedisCacheManager.getInstance().put(
+                        				key, 
+                        				AcceleratorRecordFactory.getInstance().getValue(value));
+                        		AcceleratorJDBCRecordFactory.getInstance().update(value);
+                        		successCounter++;
+                    		}
+                    		else {
+                                failedCounter++;
+                            }
+                    	}
                     }
                     catch (ClassNotFoundException cnfe) {
                     	failedCounter++;
