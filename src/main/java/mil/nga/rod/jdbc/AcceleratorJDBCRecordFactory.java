@@ -175,7 +175,7 @@ public class AcceleratorJDBCRecordFactory
     public void insert (QueryRequestAccelerator record) {
     	
     	String sql = "INSERT INTO " + ACCELERATOR_TARGET_TABLE_NAME 
-    			+ "(NRN, NSN, FILE_DATE, FILE_SIZE, HASH) VALUES ?, ?, ?, ?, ?;";
+    			+ " (NRN, NSN, FILE_DATE, FILE_SIZE, HASH) VALUES ?, ?, ?, ?, ?;";
     	PreparedStatement stmt     = null;
     	
     	try {
@@ -186,6 +186,7 @@ public class AcceleratorJDBCRecordFactory
 	    		stmt.setDate(  3, new java.sql.Date(record.getFileDate().getTime()));
 	    		stmt.setLong(  4, record.getSize());
 	    		stmt.setString(5, record.getHash());
+	    		
 	    		stmt.executeUpdate();
 	    	}
     	}
@@ -214,7 +215,7 @@ public class AcceleratorJDBCRecordFactory
     	
     	String sql = "UPDATE " 
     			+ ACCELERATOR_TARGET_TABLE_NAME 
-    			+ "SET FILE_DATE=?, FILE_SIZE=?, HASH=? WHERE NRN=? AND NSN=?";
+    			+ " SET FILE_DATE=?, FILE_SIZE=?, HASH=? WHERE NRN=? AND NSN=?";
     	PreparedStatement stmt     = null;
     	
     	try {

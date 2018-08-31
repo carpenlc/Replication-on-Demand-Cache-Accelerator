@@ -17,6 +17,7 @@ public class DumpKeys {
      * @param args Command line arguments.
      */
     public static void main(String[] args) {
+    	long start = System.currentTimeMillis();
         try (RedisCacheManager manager = RedisCacheManager.getInstance()) { 
             Set<String> keySet = manager.getKeys();
             if (keySet.size() > 0) {
@@ -31,5 +32,8 @@ public class DumpKeys {
                 System.out.println("The cache is empty.");
             }
         }
+        System.out.println("Keys retreived in [ "
+        		+ (System.currentTimeMillis() - start)
+        		+ " ] ms.");
     }
 }
