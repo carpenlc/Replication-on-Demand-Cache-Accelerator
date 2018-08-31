@@ -140,7 +140,7 @@ public class GetKey {
                 if (deserialize) {
                 	QueryRequestAccelerator record = 
                 			JSONSerializer.getInstance()
-                				.deserializeToQueryRequestAccelerator(key);
+                				.deserializeToQueryRequestAccelerator(value);
                 	if (record != null) {
                 		System.out.println(record.toString());
                 	}
