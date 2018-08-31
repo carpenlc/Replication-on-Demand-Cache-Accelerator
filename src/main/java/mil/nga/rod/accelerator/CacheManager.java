@@ -259,7 +259,6 @@ public class CacheManager {
                                 failedCounter++;
                             }
                     	}
-                        AcceleratorJDBCRecordFactory.getInstance().removeDuplicates();
                     }
                     catch (ClassNotFoundException cnfe) {
                     	failedCounter++;
@@ -299,6 +298,10 @@ public class CacheManager {
                     }
                 } // end for
             } // end try-with-resources
+            try {
+            	AcceleratorJDBCRecordFactory.getInstance().removeDuplicates();
+            }
+            catch (Exception e) {}
         } 
         else {
             LOGGER.error("Data store unavailable.  (Query did not return "
