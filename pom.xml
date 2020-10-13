@@ -22,7 +22,7 @@
       <commons.codec.version>1.10</commons.codec.version>
       <commons.pool-2.version>2.4.2</commons.pool-2.version>
       <oracle.jdbc.version>12.1.0.2</oracle.jdbc.version>
-      <junit.version>4.12</junit.version>
+      <junit.version>4.13.1</junit.version>
   </properties>
 
     <dependencies>
